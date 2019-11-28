@@ -25,7 +25,7 @@ class BaseAgent(ABC):
         pass
 
     @abstractmethod
-    def _learn():
+    def _learn(self):
         pass
 
 

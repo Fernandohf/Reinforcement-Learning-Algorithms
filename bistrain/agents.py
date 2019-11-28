@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 from collections import deque
-from model import FCActor, Critic, LSTMActor
+from .networks.actors import FCActor
 from utils import n_step_boostrap
 # In case of being imported on notebook
 try:
