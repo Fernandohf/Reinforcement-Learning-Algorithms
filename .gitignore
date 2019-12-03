@@ -52,3 +52,5 @@ Mkfile.old
 dkms.conf
 
 *__pycache__
+*pytestdebug.log
+*.pytest_cache
