@@ -6,6 +6,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from collections import deque
 from .networks.actors import FCActor
+from .base import BaseAgent, BaseNoise
 from utils import n_step_boostrap
 # In case of being imported on notebook
 try:
@@ -14,33 +15,24 @@ try:
 except NameError:
     from tqdm import tqdm
 
-# Hyperparameters
-GAMMA = 0.999             # Discount factor
-LR_ACTOR = 1e-4           # Learning rate of the actor
-LR_CRITIC = 1e-3          # Learning rate of the critic
-ACTION_MIN = -2           # Min value in continuous action
-ACTION_MAX = 2            # Max value in continuous action
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-
-class A2CAgent():
+class A2CAgent(BaseAgent):
     """Interacts and learns from the environment."""
 
-    def __init__(self, state_size, action_size, actor_hidden_size=(32),
-                 critic_hidden_size=(32, 16), random_seed=42, noise='gaussian'):
-        """Initialize an Agent object.
-
-        Params
-        ======
-            state_size (int): Dimension of each state
-            action_size (int): Dimension of each action
-            actor_hidden_size (tuple): Dimension of hidden units for actor network
-            critic_hidden_size (tuple): Dimension of hidden units for critic network
-            random_seed (int): random seed
-            noise (str): Weather use 'gaussian' or 'ornstein-uhlenbeck' noise.
+    def __init__(self, config_file):
         """
-        self.state_size = state_size
+        Initialize an Advantage Actor Critic (A2C) Agent object.
+
+        Parameters
+        ----------
+        config: str
+            Configuration file
+        """
+        # Base class
+        super().__init__(config_file)
+
+        # Quick access
+        self.state_size = self.config.STATE_SIZE
         self.action_size = action_size
         self.seed = random.seed(random_seed)
 
