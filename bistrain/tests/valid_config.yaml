@@ -1,5 +1,5 @@
 [TRAINING]
-AGENT: a2c
+
 DEVICE: cuda
 BATCH_SIZE: 256
 BUFFER_SIZE: 1000000
@@ -13,9 +13,8 @@ UPDATE_EVERY: 1
 WANDB: True
 
 [EXPLORATION]
-# Type of exploration used
+
 TYPE: normal
-# TODO
 EPS_BETA: 0.1
 EPS_MIN: 0.01
 MEAN: 0.0

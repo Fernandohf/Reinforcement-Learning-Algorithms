@@ -17,8 +17,9 @@ except NameError:
 
 
 class A2CAgent(BaseAgent):
-    """Interacts and learns from the environment."""
-
+    """
+    Advantage Actor Critic (A2C) Agent that interacts and learns from the environment
+    """
     def __init__(self, config_file):
         """
         Initialize an Advantage Actor Critic (A2C) Agent object.
@@ -33,8 +34,8 @@ class A2CAgent(BaseAgent):
 
         # Quick access
         self.state_size = self.config.STATE_SIZE
-        self.action_size = action_size
-        self.seed = random.seed(random_seed)
+        self.action_size = self.config.ACTION_SIZE
+        self.seed = random.seed(self.config.SEED)
 
         # Actor Network
         # self.actor = Actor(state_size, action_size, actor_hidden_size, random_seed).to(device)

@@ -2,78 +2,10 @@
 Handle configurations files
 """
 from configparser import ConfigParser
-from .mandatory import MANDATORY
+from mandatory import MANDATORY
 
 
-class Configuration(dict):
-    """
-    Dictionary extended class with dot access of its values
-    """
-    __getattr__ = dict.get
-    __setattr__ = dict.__setitem__
-    __delattr__ = dict.__delitem__
-
-
-def load_configuration(file="config.yaml", replace=True):
-    """
-    Load the default configuration file and verify its values
-
-    Parameters
-    ----------
-    file: str
-        Path to configuration file
-    replace: bool
-        Weather or not replace missing values
-    """
-    # Load file
-    config = ConfigParser()
-    config.read(file)
-
-    # Check values
-    verify_values(config)
-
-    # Save checked values
-    config.write(file)
-
-    return Configuration(config)
-
-
-def verify_values(parameters, replace=False, mandatory=MANDATORY):
-    """
-    Verify if the configuration dictionary has all the needed keys
-
-    Parameters
-    ----------
-    parameters: dict
-        Parameters loaded from configuration file
-    replace: bool
-        Weather or not replace missing values with defaults
-    mandatory: dict
-        Dictionary with of mandatory "NUMERIC" and "CATEGORICAL" parameters
-    """
-    if replace:
-        # Load default config
-        config = ConfigParser().read('defaults.yaml')
-
-    # Numeric values
-    for key in mandatory['NUMERIC'].keys():
-        # Check presence
-        if key not in parameters.keys():
-            msg = f"The configuration parameters {key} is missing."
-            if replace:
-                print("Some parameteres were missing, filling with default values..")
-                parameters[key] = config[key]
-            else:
-                raise MissingParameterException(msg)
-        # Check values
-        else:
-            _min = mandatory["NUMERIC"][key]["MIN"]
-            _max = mandatory["NUMERIC"][key]["MAX"]
-            if not(_min <= parameters[key] <= _max):
-                msg = f"The configuration parameters {key} is invalid."
-                raise InvalidParameterException(msg)
-
-
+# Exception classes
 class MissingParameterException(IndexError):
     """
     Exception classes for missing mandatory configuration
@@ -88,3 +20,78 @@ class InvalidParameterException(ValueError):
     """
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
+
+
+# Configuration class
+class BisTrainConfiguration(ConfigParser):
+    """
+    Extended class with dot access and consistency check
+    """
+    BOOL_POS_VALUES = ["true", "ok", "yes", "on", "fine"]
+    BOOL_NEG_VALUES = ["false", "no", "missing", "off", "not"]
+
+    def __init__(self, file, mandatory=MANDATORY, **kwargs):
+        super().__init__(**kwargs)
+
+        # Load file
+        _ = self.read(file)
+        self._verify_values(mandatory)
+
+    def getvalue(self, section, option):
+        if section != self.default_section and not self.has_section(section):
+            raise KeyError(section)
+        try:
+            # Try to return int
+            return self.getint(section, option)
+        except ValueError:
+            try:
+                # Try to return float
+                return self.getfloat(section, option)
+            except ValueError:
+                # Try to return boolean
+                str_value = self.get(section, option).lower()
+                if str_value in BisTrainConfiguration.BOOL_POS_VALUES:
+                    return True
+                elif str_value in BisTrainConfiguration.BOOL_NEG_VALUES:
+                    return False
+                else:
+                    # Otherwise return str
+                    return str_value
+
+    def _verify_values(self, mandatory):
+        """
+        Verify if the configuration file has all the needed keys
+
+        Parameters
+        ----------
+        mandatory: dict
+            Dictionary with of mandatory values
+        """
+
+        # Check keys and convert to numeric when possible
+        for s in mandatory.keys():
+            # Check presence
+            man_options = set(mandatory[s].keys())
+            curr_options = set(self[s].keys())
+            if not man_options.issubset(curr_options):
+                msg = f"The configuration parameters {man_options - curr_options} \
+                        are missing on sections {s}."
+                raise MissingParameterException(msg)
+            # Check values
+            else:
+                for k in mandatory[s]:
+                    if isinstance(mandatory[s][k], dict):
+                        _min = mandatory[s][k]["MIN"]
+                        _max = mandatory[s][k]["MAX"]
+                        if not (_min <= self.getvalue(s, k) <= _max):
+                            msg = f"The configuration parameters {k} is invalid."
+                            raise InvalidParameterException(msg)
+                    elif isinstance(mandatory[s][k], list):
+                        if self.get(s, k) not in mandatory[s][k]:
+                            msg = f"The configuration parameters {k} should be\
+                                    one of these: {mandatory[s][k]}."
+                            raise InvalidParameterException(msg)
+
+
+if __name__ == "__main__":
+    a = BisTrainConfiguration('config.yaml')
