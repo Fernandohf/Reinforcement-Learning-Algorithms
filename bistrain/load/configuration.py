@@ -2,7 +2,7 @@
 Handle configurations files
 """
 from configparser import ConfigParser
-from mandatory import MANDATORY
+from .mandatory import MANDATORY
 
 
 # Exception classes

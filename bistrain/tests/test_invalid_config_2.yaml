@@ -1,0 +1,5 @@
+[AGENT]
+[TRAINING]
+AGENT: a2c
+DEVICE: cuda
+BATCH_SIZE: 2
