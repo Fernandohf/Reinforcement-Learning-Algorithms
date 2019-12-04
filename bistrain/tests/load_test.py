@@ -49,6 +49,12 @@ class TestBisTrainConfiguration():
         a.activate_section("AGENT")
         assert a.critic_hidden_size == (256, 64)
 
+    def test_valid6(self):
+        file = os.path.join(LOCAL_FOLDER, 'test_valid_config.yaml')
+        a = BisTrainConfiguration(file)
+        a.activate_section("AGENT")
+        assert a.abc == None
+
     def test_missing(self):
         file = os.path.join(LOCAL_FOLDER, 'test_missing_config.yaml')
         with pytest.raises(MissingParameterError):

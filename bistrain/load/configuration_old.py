@@ -1,8 +1,9 @@
 """
 Handle configurations files
 """
-from configobj import ConfigObj
-from .config_spec
+from configparser import ConfigParser, NoOptionError
+from .mandatory import MANDATORY
+
 
 # Exception classes
 class MissingParameterError(IndexError):

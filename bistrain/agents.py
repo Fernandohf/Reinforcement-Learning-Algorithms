@@ -34,12 +34,17 @@ class A2CAgent(BaseAgent):
 
         # Actor Network
         # self.actor = Actor(self.config.state_size, action_size, actor_hidden_size, random_seed).to(device)
-        self.actor = FCActor(self.config.state_size, self.config.action_size, (128,), self.config.seed).to(device)
-        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=LR_ACTOR)
+        self.actor = FCActor(self.config.state_size, self.config.action_size,
+                             self.config.actor_hidden_size, self.config.seed).to(self.config.device)
+        self.actor_optimizer = self._set_optimizer(self.config.actor_optimizer, self.config.actor_lr,
+                                                   self.config.getdefault('actor_weight_decay', 0.0),
+                                                   self.config.getdefault('actor_momentum', 0.0))
 
         # Critic Network
-        self.critic = Critic(self.config.state_size, action_size, critic_hidden_size, self.config.seed).to(device)
-        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=LR_CRITIC)
+        self.critic = Critic(self.config.state_size, self.config.action_size, self.config.critic_hidden_size, self.config.seed).to(device)
+        self.critic_optimizer = self._set_optimizer(self.config.critic_optimizer, self.config.critic_lr,
+                                                    self.config.getdefault('critic_weight_decay', 0.0),
+                                                    self.config.getdefault('critic_momentum', 0.0))
 
         # Noise process
         if noise == 'gaussian':
