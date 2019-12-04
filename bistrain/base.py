@@ -3,7 +3,7 @@ Base agent class
 """
 from abc import ABC, abstractmethod
 import random
-from .load.configurations import BisTrainConfiguration
+from .load.configuration import BisTrainConfiguration
 
 
 class BaseAgent(ABC):
@@ -12,8 +12,7 @@ class BaseAgent(ABC):
     """
     def __init__(self, config_file):
         # Load configuration
-        self.config = BisTrainConfiguration()
-        self.config.read(config_file)
+        self.config = BisTrainConfiguration(config_file)
         super().__init__()
 
     @abstractmethod

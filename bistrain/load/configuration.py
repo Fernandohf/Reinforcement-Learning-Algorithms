@@ -6,7 +6,7 @@ from .mandatory import MANDATORY
 
 
 # Exception classes
-class MissingParameterException(IndexError):
+class MissingParameterError(IndexError):
     """
     Exception classes for missing mandatory configuration
     """
@@ -14,7 +14,15 @@ class MissingParameterException(IndexError):
         super().__init__(self, *args, **kwargs)
 
 
-class InvalidParameterException(ValueError):
+class NoActiveSectionException(Exception):
+    """
+    Exception classes for no active section
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(self, *args, **kwargs)
+
+
+class InvalidParameterError(ValueError):
     """
     Exception classes for invalid mandatory configuration
     """
@@ -36,6 +44,12 @@ class BisTrainConfiguration(ConfigParser):
         # Load file
         _ = self.read(file)
         self._verify_values(mandatory)
+
+    def __getattr__(self, opt):
+        if self.active_section is None:
+            raise NoActiveSectionException("No active section was defined, \
+                                            call methods 'activate_section(section)' first.")
+        return self.getvalue(self.active_section, opt)
 
     def getvalue(self, section, option):
         if section != self.default_section and not self.has_section(section):
@@ -76,7 +90,7 @@ class BisTrainConfiguration(ConfigParser):
             if not man_options.issubset(curr_options):
                 msg = f"The configuration parameters {man_options - curr_options} \
                         are missing on sections {s}."
-                raise MissingParameterException(msg)
+                raise MissingParameterError(msg)
             # Check values
             else:
                 for k in mandatory[s]:
@@ -85,12 +99,18 @@ class BisTrainConfiguration(ConfigParser):
                         _max = mandatory[s][k]["MAX"]
                         if not (_min <= self.getvalue(s, k) <= _max):
                             msg = f"The configuration parameters {k} is invalid."
-                            raise InvalidParameterException(msg)
+                            raise InvalidParameterError(msg)
                     elif isinstance(mandatory[s][k], list):
                         if self.get(s, k) not in mandatory[s][k]:
                             msg = f"The configuration parameters {k} should be\
                                     one of these: {mandatory[s][k]}."
-                            raise InvalidParameterException(msg)
+                            raise InvalidParameterError(msg)
+
+    def activate_section(self, section):
+        """
+        When a section is active all keys points to this section plus default options.
+        """
+        self.active_section = section
 
 
 if __name__ == "__main__":
