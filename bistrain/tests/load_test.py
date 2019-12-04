@@ -1,6 +1,7 @@
 import os
 import pytest
-from ..load.configuration import BisTrainConfiguration, MissingParameterError, InvalidParameterError
+from ..load.configuration import (BisTrainConfiguration, MissingParameterError,
+                                  InvalidParameterError, NoActiveSectionException)
 
 LOCAL_FOLDER = os.path.dirname(__file__)
 
@@ -52,3 +53,9 @@ class TestBisTrainConfiguration():
         file = os.path.join(LOCAL_FOLDER, 'test_missing_config.yaml')
         with pytest.raises(MissingParameterError):
             BisTrainConfiguration(file)
+
+    def test_activation(self):
+        file = os.path.join(LOCAL_FOLDER, 'test_valid_config.yaml')
+        a = BisTrainConfiguration(file)
+        with pytest.raises(NoActiveSectionException):
+            a.critic_hidden_size

@@ -44,6 +44,7 @@ class BisTrainConfiguration(ConfigParser):
         # Load file
         _ = self.read(file)
         self._verify_values(mandatory)
+        self.active_section = None
 
     def __getattr__(self, opt):
         if self.active_section is None:
