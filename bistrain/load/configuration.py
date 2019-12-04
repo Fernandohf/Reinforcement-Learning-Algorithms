@@ -69,6 +69,13 @@ class BisTrainConfiguration(ConfigParser):
                 elif str_value in BisTrainConfiguration.BOOL_NEG_VALUES:
                     return False
                 else:
+                    # Try to return list of int/float
+                    list_str = list(str_value)
+                    if ('[' == list_str[0] and ']' == list_str[-1]):
+                        try:
+                            return [int(v) for v in list_str[0:-1] if v != ',']
+                        except ValueError:
+                            return [float(v) for v in list_str[0:-1] if v != ',']
                     # Otherwise return str
                     return str_value
 

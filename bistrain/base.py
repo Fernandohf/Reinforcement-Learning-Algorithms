@@ -13,6 +13,7 @@ class BaseAgent(ABC):
     def __init__(self, config_file):
         # Load configuration
         self.config = BisTrainConfiguration(config_file)
+        self.config.activate_section("AGENT")
         super().__init__()
 
     @abstractmethod

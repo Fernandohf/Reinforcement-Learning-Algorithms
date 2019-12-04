@@ -32,25 +32,20 @@ class A2CAgent(BaseAgent):
         # Base class
         super().__init__(config_file)
 
-        # Quick access
-        self.state_size = self.config.STATE_SIZE
-        self.action_size = self.config.ACTION_SIZE
-        self.seed = random.seed(self.config.SEED)
-
         # Actor Network
-        # self.actor = Actor(state_size, action_size, actor_hidden_size, random_seed).to(device)
-        self.actor = FCActor(state_size, action_size, (128,), random_seed).to(device)
+        # self.actor = Actor(self.config.state_size, action_size, actor_hidden_size, random_seed).to(device)
+        self.actor = FCActor(self.config.state_size, self.config.action_size, (128,), self.config.seed).to(device)
         self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=LR_ACTOR)
 
         # Critic Network
-        self.critic = Critic(state_size, action_size, critic_hidden_size, random_seed).to(device)
+        self.critic = Critic(self.config.state_size, action_size, critic_hidden_size, self.config.seed).to(device)
         self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=LR_CRITIC)
 
         # Noise process
         if noise == 'gaussian':
-            self.noise = GaussianNoise(action_size, random_seed)
+            self.noise = GaussianNoise(action_size, self.config.seed)
         elif noise == 'ornstein-uhlenbeck':
-            self.noise = OUNoise(action_size, random_seed)
+            self.noise = OUNoise(action_size, self.config.seed)
 
     def act(self, state, add_noise=True):
         """Returns actions for given state as per current policy."""
@@ -268,22 +263,22 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 class DDPGAgent():
     """Interacts with and learns from the environment."""
 
-    def __init__(self, state_size, action_size, random_seed):
+    def __init__(self, self.config.state_size, action_size, random_seed):
         """Initialize an Agent object.
 
         Params
         ======
-            state_size (int): dimension of each state
+            self.config.state_size (int): dimension of each state
             action_size (int): dimension of each action
             random_seed (int): random seed
         """
-        self.state_size = state_size
-        self.action_size = action_size
+        self.config.state_size = state_size
+        self.self.config.action_size = self.config.action_size
         self.seed = random.seed(random_seed)
 
         # Actor Network (w/ Target Network)
         self.actor_local = Actor(state_size, action_size, random_seed).to(device)
-        self.actor_target = Actor(state_size, action_size, random_seed).to(device)
+        self.actor_target = Actor(state_size, self.config.action_size, random_seed).to(device)
         self.actor_optimizer = optim.Adam(self.actor_local.parameters(),
                                           lr=LR_ACTOR)
         # self.actor_lr_scheduler = StepLR(self.actor_optimizer,
@@ -291,8 +286,8 @@ class DDPGAgent():
         #                                  gamma=LR_GAMMA)
 
         # Critic Network (w/ Target Network)
-        self.critic_local = Critic(state_size, action_size, random_seed).to(device)
-        self.critic_target = Critic(state_size, action_size, random_seed).to(device)
+        self.critic_local = Critic(state_size, self.config.action_size, random_seed).to(device)
+        self.critic_target = Critic(state_size, self.config.action_size, random_seed).to(device)
         self.critic_optimizer = optim.Adam(self.critic_local.parameters(),
                                            lr=LR_CRITIC,
                                            weight_decay=WEIGHT_DECAY)
@@ -301,10 +296,10 @@ class DDPGAgent():
         #                                   gamma=LR_GAMMA)
 
         # Noise process
-        self.noise = OUNoise(action_size, random_seed)
+        self.noise = OUNoise(self.config.action_size, random_seed)
 
         # Replay memory
-        self.memory = ReplayBuffer(action_size, BUFFER_SIZE, BATCH_SIZE, random_seed)
+        self.memory = ReplayBuffer(self.config.action_size, BUFFER_SIZE, BATCH_SIZE, random_seed)
         self._step_count = 0
 
     def step(self, state, action, reward, next_state, done):
