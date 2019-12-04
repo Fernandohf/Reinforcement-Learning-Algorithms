@@ -70,12 +70,13 @@ class BisTrainConfiguration(ConfigParser):
                     return False
                 else:
                     # Try to return list of int/float
-                    list_str = list(str_value)
-                    if ('[' == list_str[0] and ']' == list_str[-1]):
+                    list_str = str_value.split(",")
+                    if (('[' == list_str[0][0] and ']' == list_str[-1][-1]) or
+                       ('(' == list_str[0][0] and ')' == list_str[-1][-1])):
                         try:
-                            return [int(v) for v in list_str[0:-1] if v != ',']
+                            return tuple([int(v.strip('[]() ')) for v in list_str if v.strip("[]() ") != ""])
                         except ValueError:
-                            return [float(v) for v in list_str[0:-1] if v != ',']
+                            return tuple([float(v.strip('[]() ')) for v in list_str if v.strip("[]() ") != ""])
                     # Otherwise return str
                     return str_value
 
