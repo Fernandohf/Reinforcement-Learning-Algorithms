@@ -17,7 +17,7 @@ UPDATE_EVERY = integer(1, 1e5, default=1)
 WANDB = boolean(default=False)
 
 [EXPLORATION]
-TYPE = option("gaussian", "o-u", "e-greedy", default="gaussian")
+TYPE = option("gaussian", "ou", "e-greedy", default="gaussian")
 
 TODO
 EPS_BETA= 0.1
