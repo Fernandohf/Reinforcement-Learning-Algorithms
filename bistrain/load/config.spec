@@ -19,6 +19,7 @@ WANDB = boolean(default=False)
 [EXPLORATION]
 TYPE = option("gaussian", "o-u", "e-greedy", default="gaussian")
 
+TODO
 EPS_BETA= 0.1
 EPS_MIN= 0.01
 MEAN= 0.0
