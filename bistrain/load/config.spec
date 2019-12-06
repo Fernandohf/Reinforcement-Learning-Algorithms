@@ -1,7 +1,7 @@
 keyword = int_list(max=6)
 
 [DEFAULT]
-SEED = integer(defualt=42)
+SEED = integer(default=42)
 DEVICE= option("cuda", "cpu", default="cuda")
 
 [TRAINING]
