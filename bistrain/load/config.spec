@@ -6,7 +6,7 @@ DEVICE= option("cuda", "cpu", default="cuda")
 
 [TRAINING]
 
-BATCH_SIZE = integer(0, 1000000, default=256)
+BATCH_SIZE = integer(0, 1e5, default=256)
 BUFFER_SIZE = integer(1e3, 1e12, default=1e7)
 MAX_T = integer(1, 1e5)
 N_AGENTS = int(1, 1e3)
