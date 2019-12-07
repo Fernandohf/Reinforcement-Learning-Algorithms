@@ -1,7 +1,9 @@
 import os
+
 import pytest
-from ..load.configuration import (BisTrainConfiguration, MissingParameterError,
-                                  InvalidParameterError, NoActiveSectionException)
+
+from ..utils.configuration import (BisTrainConfiguration,
+                                   NoActiveSectionException, ValidationError)
 
 LOCAL_FOLDER = os.path.dirname(__file__)
 
@@ -10,14 +12,15 @@ class TestBisTrainConfiguration():
     """
     Basic test for BisTrainConfiguration class
     """
+
     def test_invalid1(self):
         file = os.path.join(LOCAL_FOLDER, 'test_invalid_config_1.yaml')
-        with pytest.raises(InvalidParameterError):
+        with pytest.raises(ValidationError):
             BisTrainConfiguration(file)
 
     def test_invalid2(self):
         file = os.path.join(LOCAL_FOLDER, 'test_invalid_config_2.yaml')
-        with pytest.raises(KeyError):
+        with pytest.raises(ValidationError):
             BisTrainConfiguration(file)
 
     def test_valid1(self):
