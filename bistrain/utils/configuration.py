@@ -5,7 +5,7 @@ from configobj import ConfigObj
 from validate import Validator
 
 
-class NoActiveSectionException(Exception):
+class NoActiveSectionException(AttributeError):
     """
     Exception classes for no active section
     """
@@ -22,7 +22,7 @@ class ValidationError(ValueError):
     def __init__(self, validation, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
         self.msg = f"The following keys have invalid values:\n"
-        for k, v in validation:
+        for k, v in validation.items():
             if not v:
                 self.msg += f"Key {k} raises {v}\n"
 
@@ -39,28 +39,46 @@ class BisTrainConfiguration(ConfigObj):
         # Perform validation
         self.validator = Validator()
         self.validation = self.validate(self.validator, preserve_errors=True)
-        if self.validation:
+        if not isinstance(self.validation, dict):
             print("File validation successfully!")
         else:
             raise ValidationError(self.validation)
 
-        self.active_section = None
+        self.active_sections = None
 
     def __getattr__(self, opt):
-        # if in keys
-        if opt not in self.keys() and self.active_section is None:
-            raise AttributeError
-        try:
-            return self.__getitem__(self.active_section).__getitem__(opt)
-        except KeyError:
-            return self.__getitem__(opt)
+        """
+        After calling 'activate sections' values can be retrieved as attrbutes,
+        mainly to typing keys size when getting from same sections/subsections.
 
-    def activate_section(self, section):
+        Parameters
+        ----------
+        option: str
+            Keyword of the 'active_sections'
+
+        Return
+        -------
+        :
+        """
+        # if in keys
+        if opt not in self.keys() and self.active_sections is None:
+            raise NoActiveSectionException(
+                "No active section has been defined yet.\
+                Call 'activate_sections' before accessing values.")
+        else:
+            value = self
+            for section in self.active_sections:
+                value = value[section]
+            return value[opt]
+
+    def activate_sections(self, sections):
         """
         When a section is active all keys points to this section
         plus default options.
         """
-        self.active_section = section
+        if not isinstance(sections, list):
+            sections = [sections]
+        self.active_sections = sections
 
 
 if __name__ == "__main__":

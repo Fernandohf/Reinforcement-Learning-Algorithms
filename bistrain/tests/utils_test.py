@@ -6,65 +6,62 @@ from ..utils.configuration import (BisTrainConfiguration,
                                    NoActiveSectionException, ValidationError)
 
 LOCAL_FOLDER = os.path.dirname(__file__)
+CONFIG_SPEC = os.path.join('config.spec')
 
 
 class TestBisTrainConfiguration():
     """
-    Basic test for BisTrainConfiguration class
+    Tests for BisTrainConfiguration class
     """
 
     def test_invalid1(self):
         file = os.path.join(LOCAL_FOLDER, 'test_invalid_config_1.yaml')
         with pytest.raises(ValidationError):
-            BisTrainConfiguration(file)
+            BisTrainConfiguration(file, configspec=CONFIG_SPEC)
 
     def test_invalid2(self):
         file = os.path.join(LOCAL_FOLDER, 'test_invalid_config_2.yaml')
         with pytest.raises(ValidationError):
-            BisTrainConfiguration(file)
+            BisTrainConfiguration(file, configspec=CONFIG_SPEC)
 
     def test_valid1(self):
         file = os.path.join(LOCAL_FOLDER, 'test_valid_config.yaml')
-        a = BisTrainConfiguration(file)
-        assert a.getvalue("AGENT", "action_size") == 2
+        a = BisTrainConfiguration(file, configspec=CONFIG_SPEC)
+        assert a["AGENT"]["ACTION_SIZE"] == 2
 
     def test_valid2(self):
         file = os.path.join(LOCAL_FOLDER, 'test_valid_config.yaml')
-        a = BisTrainConfiguration(file)
-        a.activate_section("AGENT")
-        assert a.action_size == 2
+        a = BisTrainConfiguration(file, configspec=CONFIG_SPEC)
+        a.activate_sections("AGENT")
+        assert a.ACTION_SIZE == 2
 
     def test_valid3(self):
         file = os.path.join(LOCAL_FOLDER, 'test_valid_config.yaml')
-        a = BisTrainConfiguration(file)
-        a.activate_section("TRAINING")
+        a = BisTrainConfiguration(file, configspec=CONFIG_SPEC)
+        a.activate_sections("TRAINING")
         assert a.DEVICE == 'cuda'
 
     def test_valid4(self):
         file = os.path.join(LOCAL_FOLDER, 'test_valid_config.yaml')
-        a = BisTrainConfiguration(file)
-        a.activate_section("AGENT")
-        assert a.actor_hidden_size == (256,)
+        a = BisTrainConfiguration(file, configspec=CONFIG_SPEC)
+        a.activate_sections(["AGENT", "ACTOR"])
+        assert a.HIDDEN_SIZE == [256, 32]
 
     def test_valid5(self):
         file = os.path.join(LOCAL_FOLDER, 'test_valid_config.yaml')
-        a = BisTrainConfiguration(file)
-        a.activate_section("AGENT")
-        assert a.critic_hidden_size == (256, 64)
+        a = BisTrainConfiguration(file, configspec=CONFIG_SPEC)
+        a.activate_sections("AGENT")
+        assert a.CRITIC["HIDDEN_SIZE"] == [256, 128]
 
     def test_valid6(self):
         file = os.path.join(LOCAL_FOLDER, 'test_valid_config.yaml')
-        a = BisTrainConfiguration(file)
-        a.activate_section("AGENT")
-        assert a.abc == None
-
-    def test_missing(self):
-        file = os.path.join(LOCAL_FOLDER, 'test_missing_config.yaml')
-        with pytest.raises(MissingParameterError):
-            BisTrainConfiguration(file)
+        a = BisTrainConfiguration(file, configspec=CONFIG_SPEC)
+        a.activate_sections("AGENT")
+        with pytest.raises(KeyError):
+            assert a.abc
 
     def test_activation(self):
         file = os.path.join(LOCAL_FOLDER, 'test_valid_config.yaml')
-        a = BisTrainConfiguration(file)
+        a = BisTrainConfiguration(file, configspec=CONFIG_SPEC)
         with pytest.raises(NoActiveSectionException):
             a.critic_hidden_size
