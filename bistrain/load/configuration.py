@@ -2,13 +2,14 @@
 Handle configurations files
 """
 from configobj import ConfigObj
-from .config_spec
+
 
 # Exception classes
 class MissingParameterError(IndexError):
     """
     Exception classes for missing mandatory configuration
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
 
@@ -17,6 +18,7 @@ class NoActiveSectionException(Exception):
     """
     Exception classes for no active section
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
 
@@ -25,20 +27,21 @@ class InvalidParameterError(ValueError):
     """
     Exception classes for invalid mandatory configuration
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
 
 
 # Configuration class
-class BisTrainConfiguration(ConfigParser):
+class BisTrainConfiguration(ConfigObj):
     """
     Extended class with dot access and consistency check
     """
     BOOL_POS_VALUES = ["true", "ok", "yes", "on", "fine"]
     BOOL_NEG_VALUES = ["false", "no", "missing", "off", "not"]
 
-    def __init__(self, file, mandatory=MANDATORY, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         # Load file
         _ = self.read(file)
@@ -78,7 +81,7 @@ class BisTrainConfiguration(ConfigParser):
                     # Try to return list of int/float
                     list_str = str_value.split(",")
                     if (('[' == list_str[0][0] and ']' == list_str[-1][-1]) or
-                       ('(' == list_str[0][0] and ')' == list_str[-1][-1])):
+                            ('(' == list_str[0][0] and ')' == list_str[-1][-1])):
                         try:
                             return tuple([int(v.strip('[]() ')) for v in list_str if v.strip("[]() ") != ""])
                         except ValueError:

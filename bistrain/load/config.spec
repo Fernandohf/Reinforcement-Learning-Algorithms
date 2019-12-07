@@ -18,29 +18,28 @@ WANDB = boolean(default=False)
 
 [EXPLORATION]
 TYPE = option("gaussian", "ou", "e-greedy", default="gaussian")
-
-TODO
-EPS_BETA= 0.1
-EPS_MIN= 0.01
-MEAN= 0.0
-SIGMA= 0.4
-THETA= 0.01
+EPS_BETA = float(min=0, default=0.1)
+EPS_MIN = float(min=0, default=0.01)
+MEAN = float(default=0)
+SIGMA = float(min=0, default=0.05)
+THETA = float(min=0, default=0.05)
 
 [AGENT]
-TYPE= a2c
-ACTION_SIZE= 2
-STATE_SIZE= 24
-GAMMA= 0.99
-TAU= 0.005
+TYPE = options("a2c", "ddpg", "ppo", default="ddpg")
+ACTION_SIZE = integer(min=1)
+STATE_SIZE = integer(min=1)
+GAMMA = float(.1, 1, default=.999)
+TAU = float(min=0, default=.05)
+OPTIMIZER = option("adam", "adamw", "sgd", default="adam")
 
   [[ACTOR]]
-  GRADIENT_CLIP_VALUE= 5
-  LR= 0.001
-  WEIGHT_DECAY= 0.0
-  OPTIMIZER= adam
+  GRADIENT_CLIP_VALUE = float(min=0)
+  LR = float(min=0)
+  WEIGHT_DECAY = float(min=0)
+  OPTIMIZER = option("adam", "adamw", "sgd", default="adam")
 
   [[CRITIC]]
-  GRADIENT_CLIP_VALUE= 1
-  LR= 0.001
-  WEIGHT_DECAY= 1.0e-05
-  OPTIMIZER= adam
+  GRADIENT_CLIP_VALUE = float(min=0, default=1e32)
+  LR = float(min=0, default=.01)
+  WEIGHT_DECAY = float(min=0, default=0.)
+  OPTIMIZER = option("adam", "adamw", "sgd", default="adam")
