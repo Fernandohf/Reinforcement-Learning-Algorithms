@@ -33,18 +33,21 @@ class BisTrainConfiguration(ConfigObj):
     Extended class with dot access and built-in validation check
     """
 
-    def __init__(self, *args, configspec="config.spec", **kwargs):
-        super().__init__(*args, configspec=configspec, **kwargs)
+    def __init__(self, *args, interpolation="template",
+                 configspec="config.spec", **kwargs):
+        super().__init__(*args, interpolation="template",
+                         configspec=configspec, **kwargs)
 
         # Perform validation
         self.validator = Validator()
         self.validation = self.validate(self.validator, preserve_errors=True)
+        print(self.validation)
         if not isinstance(self.validation, dict):
             print("File validation successfully!")
         else:
             raise ValidationError(self.validation)
 
-        self.active_sections = None
+        self._active_sections = None
 
     def __getattr__(self, opt):
         """
@@ -54,31 +57,56 @@ class BisTrainConfiguration(ConfigObj):
         Parameters
         ----------
         option: str
-            Keyword of the 'active_sections'
+            Key present on 'active_sections'
 
-        Return
-        -------
-        :
         """
         # if in keys
-        if opt not in self.keys() and self.active_sections is None:
+        if opt not in self.keys() and self._active_sections is None:
             raise NoActiveSectionException(
                 "No active section has been defined yet.\
                 Call 'activate_sections' before accessing values.")
         else:
             value = self
-            for section in self.active_sections:
+            for section in self._active_sections:
                 value = value[section]
             return value[opt]
 
+    @property
+    def active_sections(self):
+        return self._active_sections
+
     def activate_sections(self, sections):
         """
-        When a section is active all keys points to this section
-        plus default options.
+        When sections are active, values can be directly accessed with
+        attribute.
+
+        Parameters
+        ----------
+        sections: str or list
+            Section to be used by default when accessing values as attributes
         """
         if not isinstance(sections, list):
             sections = [sections]
-        self.active_sections = sections
+        self._active_sections = sections
+
+    def activate_subsection(self, subsection):
+        """
+        Append subsection to active sections.
+
+        Parameters
+        ----------
+        subsection: str
+            Subsection to be activated
+        """
+        sections = self._active_sections + [subsection]
+        self.activate_sections(sections)
+
+    def deactivate_subsection(self):
+        """
+        Remove last active subsection
+        """
+        sections = self._active_sections[:-1]
+        self.activate_sections(sections)
 
 
 if __name__ == "__main__":
