@@ -64,10 +64,28 @@ class BisTrainConfiguration(ConfigObj):
                 "No active section has been defined yet.\
                 Call 'activate_sections' before accessing values.")
         else:
-            value = self
-            for section in self._active_sections:
-                value = value[section]
-            return value[opt]
+            # Search final section
+            _dicts = self._get_dict(self._active_sections)
+            for d in _dicts:
+                try:
+                    # Deepest section
+                    return d[opt]
+                except KeyError:
+                    # Search upper sections
+                    continue
+            # Case key not found
+            raise KeyError
+
+    def _get_dict(self, sections):
+        """
+        Auxiliar function to retrieve nested dict in access order
+        """
+        dicts = []
+        value = self
+        for section in self._active_sections:
+            dicts.append(value[section])
+            value = value[section]
+        return dicts
 
     @property
     def active_sections(self):

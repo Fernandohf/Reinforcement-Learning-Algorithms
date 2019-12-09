@@ -20,8 +20,7 @@ class BaseAgent(ABC):
         self.config.activate_sections("AGENT")
         super().__init__()
 
-    def _set_optimizer(self, parameters, sub_section):
-        self.config.activate_subsection(sub_section)
+    def _set_optimizer(self, parameters):
         if self.config.OPTIMIZER == 'sgd':
             optimizer = SGD(parameters, lr=self.config.LR,
                             momentum=self.config.MOMENTUM)
@@ -32,17 +31,16 @@ class BaseAgent(ABC):
             # Default
             optimizer = Adam(parameters, lr=self.config.LR,
                              weight_decay=self.config.WEIGHT_DECAY)
-        self.config.deactivate_subsection()
         return optimizer
 
-    def _set_noise(self, subsection="EXPLORATION"):
-        self.config.activate_subsection(subsection)
+    def _set_noise(self):
+        self.config.activate_sections("EXPLORATION")
         if self.config.TYPE == 'ou':
             noise = OUNoise(self.config)
         else:
             # Default
-            noise = GaussianNoise()
-        self.config.deactivate_subsection()
+            noise = GaussianNoise(self.config)
+        self.config.activate_sections("AGENT")
         return noise
 
     @abstractmethod

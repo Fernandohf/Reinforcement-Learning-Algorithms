@@ -7,10 +7,12 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
-from utils import n_step_boostrap
-
 from .base.base_agent import BaseAgent
-from .networks.actors import FCActor
+from .networks.actors import FCActorContinuous
+from .networks.critics import Critic
+
+#  from utils import n_step_boostrap
+
 
 # In case of being imported on notebook
 try:
@@ -38,24 +40,24 @@ class A2CAgent(BaseAgent):
         super().__init__(config_file)
 
         # Actor Network
-        self.actor = FCActor(self.config.STATE_SIZE, self.config.ACTION_SIZE,
-                             self.config.ACTOR["HIDDEN_SIZE"],
-                             self.config.SEED).to(self.config.DEVICE)
-        self.actor_optimizer = self._set_optimizer(self.actor.parameters(),
-                                                   "ACTOR")
+        self.config.activate_subsection("ACTOR")
+        self.actor = FCActorContinuous(self.config.STATE_SIZE,
+                                       self.config.ACTION_SIZE,
+                                       tuple(self.config.HIDDEN_SIZE),
+                                       self.config.SEED).to(self.config.DEVICE)
+        self.actor_optimizer = self._set_optimizer(self.actor.parameters())
+        self.config.deactivate_subsection()
 
         # Critic Network
+        self.config.activate_subsection("CRITIC")
         self.critic = Critic(self.config.STATE_SIZE, self.config.ACTION_SIZE,
-                             self.config.CRITIC["HIDDEN_SIZE"],
+                             self.config.HIDDEN_SIZE,
                              self.config.SEED).to(self.config.DEVICE)
-        self.critic_optimizer = self._set_optimizer(self.critic.parameters(),
-                                                    "CRITIC")
+        self.critic_optimizer = self._set_optimizer(self.critic.parameters())
+        self.config.deactivate_subsection()
 
         # Noise process
-        if noise == 'gaussian':
-            self.noise = GaussianNoise(action_size, self.config.seed)
-        elif noise == 'ornstein-uhlenbeck':
-            self.noise = OUNoise(action_size, self.config.seed)
+        self.noise = self._set_noise()
 
     def act(self, state, add_noise=True):
         """Returns actions for given state as per current policy."""
@@ -76,15 +78,19 @@ class A2CAgent(BaseAgent):
     def reset(self):
         self.noise.reset()
 
-    def learn(self, states, actions, rewards, next_states, dones, gamma):
+    def step(self):
+        # TODO
+        pass
+
+    def _learn(self, states, actions, rewards, next_states, dones, gamma):
         """Update policy and value parameters using given batch of experience tuples.
         Q_targets = r + γ * critic_target(next_state, actor_target(next_state))
         where:
             actor_target(state) -> action
             critic_target(state, action) -> Q-value
 
-        Params
-        ======
+        Parameters
+        ----------
             experiences (Tuple[torch.Tensor]): tuple of (s, a, r, s', done) tuples
             gamma (float): discount factor
         """
@@ -129,56 +135,6 @@ class A2CAgent(BaseAgent):
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
         self.actor_optimizer.step()
-
-
-class GaussianNoise():
-    """
-    Simple scaled gaussian noise
-    """
-
-    def __init__(self, size, seed, mu=0., sigma=0.2, sigma_factor=.95):
-        """Initialize parameters and noise process."""
-        self.mu = mu
-        self.size = size
-        self.sigma_init = sigma
-        self.sigma = sigma
-        self.sigma_factor = sigma_factor
-        self.seed = np.random.seed(seed)
-        self.reset()
-
-    def reset(self):
-        """Reset the internal sigma to initial sigma"""
-        self.sigma = self.sigma_init
-
-    def sample(self):
-        """Update internal state and return it as a noise sample."""
-        self.sigma *= self.sigma_factor
-        sample = np.random.normal(self.mu, self.sigma, size=self.size)
-        return sample
-
-
-class OUNoise:
-    """Ornstein-Uhlenbeck process."""
-
-    def __init__(self, size, seed, mu=0., theta=0.15, sigma=0.2):
-        """Initialize parameters and noise process."""
-        self.mu = mu * np.ones(size)
-        self.theta = theta
-        self.sigma = sigma
-        self.seed = random.seed(seed)
-        self.reset()
-
-    def reset(self):
-        """Reset the internal state (= noise) to mean (mu)."""
-        self.state = copy.copy(self.mu)
-
-    def sample(self):
-        """Update internal state and return it as a noise sample."""
-        x = self.state
-        dx = self.theta * (self.mu - x) + self.sigma * \
-            np.array([random.random() for i in range(len(x))])
-        self.state = x + dx
-        return self.state
 
 
 def train_a2c(mp_envs, agent, episodes=2000, n_step=5, print_every=10, max_steps=300):
@@ -267,7 +223,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 class DDPGAgent():
     """Interacts with and learns from the environment."""
 
-    def __init__(self, self.config.state_size, action_size, random_seed):
+    def __init__(self, state_size, action_size, random_seed):
         """Initialize an Agent object.
 
         Params
@@ -310,21 +266,6 @@ class DDPGAgent():
         self.memory = ReplayBuffer(
             self.config.action_size, BUFFER_SIZE, BATCH_SIZE, random_seed)
         self._step_count = 0
-
-    def step(self, state, action, reward, next_state, done):
-        """Save experience in replay memory, and use random sample from buffer to learn."""
-        # Save experience / reward
-        self.memory.add(state, action, reward, next_state, done)
-        self._step_count += 1
-        # self.update_every = self._step_count
-
-        # Learn, if enough samples are available in memory
-        if len(self.memory) > BATCH_SIZE and self._step_count >= UPDATE_EVERY_N_STEPS:
-            self._step_count = 0
-            # Multiple updates
-            for i in range(UPDATE_N_TIMES):
-                experiences = self.memory.sample()
-                self.learn(experiences, GAMMA)
 
     def act(self, state, add_noise=True):
         """Returns actions for given state as per current policy."""
