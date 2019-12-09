@@ -80,11 +80,11 @@ class OUNoise(BaseNoise):
         """
         Reset the internal state to mean
         """
-        self.state = copy(self.config.MEAN)
+        self.state = np.ones(self.config.SIZE) * self.config.MEAN
 
     def sample(self):
         """
-        Update internal state and return it as a noise sample
+        Update internal state sand return it as a noise sample
 
         Return
         ------

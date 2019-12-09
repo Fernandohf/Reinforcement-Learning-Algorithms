@@ -93,6 +93,26 @@ class TestGaussianNoise():
         assert abs(samples.min()) >= n.config.EPS_MIN
 
 
+class TestOUNoise():
+    """
+    Test class to OU Noise
+    """
+    @staticmethod
+    def _create_noise():
+        c = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
+        c["EXPLORATION"]["SIZE"] = 1
+        c["EXPLORATION"]["TYPE"] = 'ou'
+        c.activate_sections("EXPLORATION")
+        n = OUNoise(c)
+        return n
+
+    def test_reset(self):
+        n = self._create_noise()
+        samples = [n.sample() for i in range(100)]
+        n.reset()
+        assert n.state == n.config.MEAN
+
+
 # TODO
 class TestA2CAgent():
     """

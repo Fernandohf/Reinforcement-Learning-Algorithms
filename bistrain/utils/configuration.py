@@ -33,10 +33,8 @@ class BisTrainConfiguration(ConfigObj):
     Extended class with dot access and built-in validation check
     """
 
-    def __init__(self, *args, interpolation="template",
-                 configspec="config.spec", **kwargs):
-        super().__init__(*args, interpolation="template",
-                         configspec=configspec, **kwargs)
+    def __init__(self, *args, configspec="config.spec", **kwargs):
+        super().__init__(*args, configspec=configspec, **kwargs)
 
         # Perform validation
         self.validator = Validator()
