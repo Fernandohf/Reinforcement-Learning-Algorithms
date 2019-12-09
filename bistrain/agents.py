@@ -1,13 +1,17 @@
-import numpy as np
-import random
 import copy
+import random
+from collections import deque, namedtuple
+
+import numpy as np
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
-from collections import deque
-from .networks.actors import FCActor
-from .base import BaseAgent, BaseNoise
+
 from utils import n_step_boostrap
+
+from .base.base_agent import BaseAgent
+from .networks.actors import FCActor
+
 # In case of being imported on notebook
 try:
     get_ipython
@@ -18,8 +22,9 @@ except NameError:
 
 class A2CAgent(BaseAgent):
     """
-    Advantage Actor Critic (A2C) Agent that interacts and learns from the environment
+    Advantage Actor Critic (A2C) Agent
     """
+
     def __init__(self, config_file):
         """
         Initialize an Advantage Actor Critic (A2C) Agent object.
@@ -33,18 +38,18 @@ class A2CAgent(BaseAgent):
         super().__init__(config_file)
 
         # Actor Network
-        # self.actor = Actor(self.config.state_size, action_size, actor_hidden_size, random_seed).to(device)
-        self.actor = FCActor(self.config.state_size, self.config.action_size,
-                             self.config.actor_hidden_size, self.config.seed).to(self.config.device)
-        self.actor_optimizer = self._set_optimizer(self.config.actor_optimizer, self.config.actor_lr,
-                                                   self.config.getdefault('actor_weight_decay', 0.0),
-                                                   self.config.getdefault('actor_momentum', 0.0))
+        self.actor = FCActor(self.config.STATE_SIZE, self.config.ACTION_SIZE,
+                             self.config.ACTOR["HIDDEN_SIZE"],
+                             self.config.SEED).to(self.config.DEVICE)
+        self.actor_optimizer = self._set_optimizer(self.actor.parameters(),
+                                                   "ACTOR")
 
         # Critic Network
-        self.critic = Critic(self.config.state_size, self.config.action_size, self.config.critic_hidden_size, self.config.seed).to(device)
-        self.critic_optimizer = self._set_optimizer(self.config.critic_optimizer, self.config.critic_lr,
-                                                    self.config.getdefault('critic_weight_decay', 0.0),
-                                                    self.config.getdefault('critic_momentum', 0.0))
+        self.critic = Critic(self.config.STATE_SIZE, self.config.ACTION_SIZE,
+                             self.config.CRITIC["HIDDEN_SIZE"],
+                             self.config.SEED).to(self.config.DEVICE)
+        self.critic_optimizer = self._set_optimizer(self.critic.parameters(),
+                                                    "CRITIC")
 
         # Noise process
         if noise == 'gaussian':
@@ -90,7 +95,8 @@ class A2CAgent(BaseAgent):
         curr_states = torch.from_numpy(next_states[:, 0, :]).float().to(device)
         curr_actions = torch.from_numpy(actions[:, 0, :]).float().to(device)
 
-        last_boot_next_state = torch.from_numpy(next_states[:, -1, :]).float().to(device)
+        last_boot_next_state = torch.from_numpy(
+            next_states[:, -1, :]).float().to(device)
         # actions_boot = torch.from_numpy(actions[:, :, 0]).float().to(device)
         last_dones_boot = torch.from_numpy(dones[:, -1, :]).float().to(device)
 
@@ -103,7 +109,8 @@ class A2CAgent(BaseAgent):
         rewards_boot = torch.from_numpy(rewards).float().to(device)
         Q_targets_next = self.critic(last_boot_next_state, actions_n_next)
         # Compute Q targets for current states (y_i)
-        Q_targets = rewards_boot + ((gamma ** n_bootstrap) * Q_targets_next * (1. - last_dones_boot))
+        Q_targets = rewards_boot + \
+            ((gamma ** n_bootstrap) * Q_targets_next * (1. - last_dones_boot))
 
         # Compute critic loss
         Q_expected = self.critic(curr_states, curr_actions)
@@ -128,6 +135,7 @@ class GaussianNoise():
     """
     Simple scaled gaussian noise
     """
+
     def __init__(self, size, seed, mu=0., sigma=0.2, sigma_factor=.95):
         """Initialize parameters and noise process."""
         self.mu = mu
@@ -167,7 +175,8 @@ class OUNoise:
     def sample(self):
         """Update internal state and return it as a noise sample."""
         x = self.state
-        dx = self.theta * (self.mu - x) + self.sigma * np.array([random.random() for i in range(len(x))])
+        dx = self.theta * (self.mu - x) + self.sigma * \
+            np.array([random.random() for i in range(len(x))])
         self.state = x + dx
         return self.state
 
@@ -235,17 +244,7 @@ def train_a2c(mp_envs, agent, episodes=2000, n_step=5, print_every=10, max_steps
     return np.asarray(scores_envs)
 
 
-
-import numpy as np
-import random
-import copy
-from collections import namedtuple, deque
-from model import Actor, Critic
-import torch
-import torch.nn.functional as F
-import torch.optim as optim
 # from torch.optim.lr_scheduler import StepLR
-
 
 BUFFER_SIZE = int(1e5)      # Replay buffer size
 BATCH_SIZE = 128            # Minibatch size
@@ -282,8 +281,10 @@ class DDPGAgent():
         self.seed = random.seed(random_seed)
 
         # Actor Network (w/ Target Network)
-        self.actor_local = Actor(state_size, action_size, random_seed).to(device)
-        self.actor_target = Actor(state_size, self.config.action_size, random_seed).to(device)
+        self.actor_local = Actor(
+            state_size, action_size, random_seed).to(device)
+        self.actor_target = Actor(
+            state_size, self.config.action_size, random_seed).to(device)
         self.actor_optimizer = optim.Adam(self.actor_local.parameters(),
                                           lr=LR_ACTOR)
         # self.actor_lr_scheduler = StepLR(self.actor_optimizer,
@@ -291,8 +292,10 @@ class DDPGAgent():
         #                                  gamma=LR_GAMMA)
 
         # Critic Network (w/ Target Network)
-        self.critic_local = Critic(state_size, self.config.action_size, random_seed).to(device)
-        self.critic_target = Critic(state_size, self.config.action_size, random_seed).to(device)
+        self.critic_local = Critic(
+            state_size, self.config.action_size, random_seed).to(device)
+        self.critic_target = Critic(
+            state_size, self.config.action_size, random_seed).to(device)
         self.critic_optimizer = optim.Adam(self.critic_local.parameters(),
                                            lr=LR_CRITIC,
                                            weight_decay=WEIGHT_DECAY)
@@ -304,7 +307,8 @@ class DDPGAgent():
         self.noise = OUNoise(self.config.action_size, random_seed)
 
         # Replay memory
-        self.memory = ReplayBuffer(self.config.action_size, BUFFER_SIZE, BATCH_SIZE, random_seed)
+        self.memory = ReplayBuffer(
+            self.config.action_size, BUFFER_SIZE, BATCH_SIZE, random_seed)
         self._step_count = 0
 
     def step(self, state, action, reward, next_state, done):
@@ -363,7 +367,8 @@ class DDPGAgent():
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
         # Clip gradients
-        torch.nn.utils.clip_grad_norm_(self.critic_local.parameters(), GRADIENT_CLIP_VALUE)
+        torch.nn.utils.clip_grad_norm_(
+            self.critic_local.parameters(), GRADIENT_CLIP_VALUE)
         self.critic_optimizer.step()
         # self.critic_lr_scheduler.step()
 
@@ -393,4 +398,5 @@ class DDPGAgent():
             tau (float): interpolation parameter
         """
         for target_param, local_param in zip(target_model.parameters(), local_model.parameters()):
-            target_param.data.copy_(tau * local_param.data + (1.0 - tau) * target_param.data)
+            target_param.data.copy_(
+                tau * local_param.data + (1.0 - tau) * target_param.data)

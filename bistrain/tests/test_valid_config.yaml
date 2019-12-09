@@ -13,6 +13,7 @@ WANDB = True
 
 [EXPLORATION]
 TYPE = gaussian
+SIZE = 2
 EPS_BETA = 0.1
 EPS_MIN = 0.01
 MEAN = 0.0
