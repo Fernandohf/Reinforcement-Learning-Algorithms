@@ -105,7 +105,3 @@ class BisTrainConfiguration(ConfigObj):
         """
         sections = self._active_sections[:-1]
         self.activate_sections(sections)
-
-
-if __name__ == "__main__":
-    a = BisTrainConfiguration('config.yaml')
