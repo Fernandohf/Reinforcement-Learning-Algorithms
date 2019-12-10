@@ -13,6 +13,7 @@ WANDB = True
 
 [EXPLORATION]
 TYPE = gaussian
+SIZE = 2
 EPS_BETA = 0.1
 EPS_MIN = 0.01
 MEAN = 0.0
@@ -25,6 +26,8 @@ ACTION_SIZE = 2
 STATE_SIZE = 24
 GAMMA = 0.99
 TAU = 0.005
+SEED = 42
+DEVICE = cpu
 
   [[ACTOR]]
   HIDDEN_SIZE = 256, 32

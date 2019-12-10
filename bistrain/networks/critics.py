@@ -11,28 +11,40 @@ class Critic(nn.Module):
     Fully connected policy/actor network model
     """
 
-    def __init__(self, state_size, action_size, n_agents=1,
-                 fcs1_units=256, fc2_units=128, fcs3_units=64):
-        """Initialize parameters and build model.
-        Params
-        ======
-            state_size (int): Dimension of each state
-            action_size (int): Dimension of each action
-            seed (int): Random seed
-            fcs1_units (int): Number of nodes in the first hidden layer
-            fc2_units (int): Number of nodes in the second hidden layer
+    def __init__(self, state_size, action_size,
+                 hidden_sizes=(128, 64), seed=42, hidden_activation='relu'):
         """
-        super(Critic, self).__init__()
-        self.fcs1 = nn.Linear(state_size * n_agents, fcs1_units)
-        self.bn1 = nn.BatchNorm1d(fcs1_units)
-        self.fc2 = nn.Linear(fcs1_units + (action_size * n_agents), fc2_units)
-        self.fc3 = nn.Linear(fc2_units, fcs3_units)
-        self.fc4 = nn.Linear(fcs3_units, 1)
+        Initialize parameters and build model.
+
+        Parameters
+        ----------
+        state_size: int
+            Dimension of each state
+        action_size: int
+            Dimension of each action
+        hidden_units: iterable
+            Iterable with the hidden units dimensions
+        seed: int
+            Random seed
+            TODO
+        """
+        super().__init__()
+        # Set seed
+        self.seed = torch.manual_seed(seed)
+
+        # Model
+        self.layers = nn.ModuleList()
+        layers_sizes = [state_size + action_size] + list(hidden_sizes) + [1]
+        for i in range(len(layers_sizes) - 1):
+            self.layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
+            self.layers.append(nn.ReLU6())
 
     def forward(self, state, action):
-        """Build a critic (value) network that maps (state, action) pairs -> Q-values."""
-        xs = F.relu(self.bn1(self.fcs1(state)))
-        x = torch.cat((xs, action), dim=1)
-        x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
-        return self.fc4(x)
+        """
+        Propagates critic network that maps
+        states and actions pairs to Q-values
+        """
+        x = torch.cat((state, action), dim=1)
+        for layer in self.layers:
+            x = layer(x)
+        return x

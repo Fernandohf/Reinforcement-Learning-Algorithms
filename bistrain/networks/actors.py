@@ -10,6 +10,7 @@ class FCActorDiscrete(nn.Module):
     """
     Fully connected policy/actor network model for discrete action spaces
     """
+
     def __init__(self, state_size, action_size, seed,
                  hidden_sizes=(128, 64), hidden_activation='relu',
                  output_actions='tanh', output_scale=2):
@@ -54,8 +55,9 @@ class FCActorContinuous(nn.Module):
     """
     Fully connected policy/actor network model for continuos actions spaces.
     """
-    def __init__(self, state_size, action_size, seed,
-                 hidden_sizes=(128, 64), hidden_activation='relu',
+
+    def __init__(self, state_size, action_size,
+                 hidden_sizes=(128, 64), seed=42, hidden_activation='relu',
                  output_actions='tanh', output_scale=2):
         """
         Initialize parameters and build model.
@@ -89,6 +91,7 @@ class FCActorContinuous(nn.Module):
         """
         Build an actor network that maps states to actions
         """
-        x = F.relu(self.bn1(self.fc1(state)))
-        x = F.relu(self.bn2(self.fc2(x)))
+        x = state
+        for layer in self.layers:
+            x = layer(x)
         return torch.tanh(self.fc3(x))
