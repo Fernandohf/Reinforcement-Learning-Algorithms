@@ -44,10 +44,10 @@ class FCActorDiscrete(nn.Module):
             self.layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
         
         # Activation hidden
-        self.hidden_activation = get_activation_function(hidden_activation)
+        self.hidden_activation = getattr(F, hidden_activation)
 
         # Ouput activation
-        self.output_activation = get_activation_function(output_activation)
+        self.output_activation = getattr(F, output_activation)
 
     def forward(self, state):
         """
@@ -106,11 +106,11 @@ class FCActorContinuous(nn.Module):
                 self.layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))    
 
         # Activation hidden
-        self.hidden_activation = get_activation_function(hidden_activation)
+        self.hidden_activation = getattr(F, hidden_activation)
 
         # Ouput activation
-        self.output_loc_activation = get_activation_function(output_loc_activation)
-        self.output_scale_activation = get_activation_function(output_scale_activation)
+        self.output_loc_activation = getattr(F, output_loc_activation)
+        self.output_scale_activation = getattr(F, output_scale_activation)
         
         self.output_loc_scaler = output_loc_scaler
 
@@ -128,16 +128,3 @@ class FCActorContinuous(nn.Module):
         
         dist = Normal(loc=loc, scale=scale)
         return dist.sample()
-
-# Activation hidden
-def get_activation_function(activation):
-    """
-    Return the appropriate activation function
-
-    Parameters
-    ----------
-    hidden_activation: str
-        Activation function name
-    """
-    return getattr(F, activation)
-            
