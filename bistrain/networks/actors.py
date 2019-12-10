@@ -2,8 +2,9 @@
 Networks architectures for Actors/Policy.
 """
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
+from torch.distributions import Normal, Categorical
 
 
 class FCActorDiscrete(nn.Module):
@@ -11,9 +12,9 @@ class FCActorDiscrete(nn.Module):
     Fully connected policy/actor network model for discrete action spaces
     """
 
-    def __init__(self, state_size, action_size, seed,
-                 hidden_sizes=(128, 64), hidden_activation='relu',
-                 output_actions='tanh', output_scale=2):
+    def __init__(self, state_size, action_size, hidden_sizes=(128, 64),
+                 seed=42, hidden_activation='relu',
+                 output_activation='log_sofmax',):
         """
         Initialize parameters and build model.
 
@@ -23,11 +24,14 @@ class FCActorDiscrete(nn.Module):
             Dimension of each state
         action_size: int
             Dimension of each action
+        hidden_sizes: iterable
+            Iterable with the hidden units dimensions
         seed: int
             Random seed
-        hidden_units: iterable
-            Iterable with the hidden units dimensions
-        TODO
+        hidden_activation: str
+            Hidden units activation function
+        output_activation: str
+            Ouput activation function
         """
         super().__init__()
         # Set seed
@@ -38,17 +42,27 @@ class FCActorDiscrete(nn.Module):
         layers_sizes = [state_size] + list(hidden_sizes) + [action_size]
         for i in range(len(layers_sizes) - 1):
             self.layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
+        
+        # Activation hidden
+        self.hidden_activation = get_activation_function(hidden_activation)
 
-        # Gaussian distribution std
-        self.std = nn.Parameter(torch.zeros(action_size))
+        # Ouput activation
+        self.output_activation = get_activation_function(output_activation)
 
     def forward(self, state):
         """
-        Build an actor network that maps states to actions
+        Build an actor network that maps states to actions probabilities
         """
-        x = F.relu(self.bn1(self.fc1(state)))
-        x = F.relu(self.bn2(self.fc2(x)))
-        return torch.tanh(self.fc3(x))
+        x = state
+        for layer in self.layers[:-1]:
+            x = self.hidden_activation(layer(x))
+        # Logsoftmax for numerical stability
+        logits = self.output_activation(self.layers[-1](x))
+        
+        # Distribution
+        dist = Categorical(logits=logits)
+
+        return dist.sample() 
 
 
 class FCActorContinuous(nn.Module):
@@ -58,7 +72,8 @@ class FCActorContinuous(nn.Module):
 
     def __init__(self, state_size, action_size,
                  hidden_sizes=(128, 64), seed=42, hidden_activation='relu',
-                 output_actions='tanh', output_scale=2):
+                 output_loc_activation='tanh', output_scale_activation='relu',
+                 output_loc_scaler=2):
         """
         Initialize parameters and build model.
 
@@ -68,11 +83,14 @@ class FCActorContinuous(nn.Module):
             Dimension of each state
         action_size: int
             Dimension of each action
+        hidden_sizes: iterable
+            Iterable with the hidden units dimensions
         seed: int
             Random seed
-        hidden_units: iterable
-            Iterable with the hidden units dimensions
-        TODO
+        hidden_activation: str
+            Hidden units activation function
+        output_activation: str
+            Ouput activation function
         """
         super().__init__()
         # Set seed
@@ -83,15 +101,43 @@ class FCActorContinuous(nn.Module):
         layers_sizes = [state_size] + list(hidden_sizes) + [action_size]
         for i in range(len(layers_sizes) - 1):
             self.layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
+            # duplicate last layer
+            if i == len(layers_sizes) - 1:
+                self.layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))    
 
-        # Gaussian distribution std
-        self.std = nn.Parameter(torch.zeros(action_size))
+        # Activation hidden
+        self.hidden_activation = get_activation_function(hidden_activation)
+
+        # Ouput activation
+        self.output_loc_activation = get_activation_function(output_loc_activation)
+        self.output_scale_activation = get_activation_function(output_scale_activation)
+        
+        self.output_loc_scaler = output_loc_scaler
 
     def forward(self, state):
         """
         Build an actor network that maps states to actions
         """
         x = state
-        for layer in self.layers:
-            x = layer(x)
-        return torch.tanh(self.fc3(x))
+        for layer in self.layers[-2]:
+            x = self.hidden_activation(layer(x))
+        
+        # Distribution
+        loc = self.output_loc_activation(x) * self.output_loc_scaler
+        scale = self.output_scale_activation(x)
+        
+        dist = Normal(loc=loc, scale=scale)
+        return dist.sample()
+
+# Activation hidden
+def get_activation_function(activation):
+    """
+    Return the appropriate activation function
+
+    Parameters
+    ----------
+    hidden_activation: str
+        Activation function name
+    """
+    return getattr(F, activation)
+            
