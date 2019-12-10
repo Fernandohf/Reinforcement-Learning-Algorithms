@@ -6,11 +6,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class Critic(nn.Module):
+class FCCritic(nn.Module):
     """
     Fully connected policy/actor network model
     """
-
     def __init__(self, state_size, action_size,
                  hidden_sizes=(128, 64), seed=42, hidden_activation='relu'):
         """
@@ -26,7 +25,8 @@ class Critic(nn.Module):
             Iterable with the hidden units dimensions
         seed: int
             Random seed
-            TODO
+        hidden_activation: str
+            Hidden units activation function
         """
         super().__init__()
         # Set seed
@@ -37,7 +37,9 @@ class Critic(nn.Module):
         layers_sizes = [state_size + action_size] + list(hidden_sizes) + [1]
         for i in range(len(layers_sizes) - 1):
             self.layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
-            self.layers.append(nn.ReLU6())
+
+        # Activation hidden
+        self.hidden_activation = getattr(F, hidden_activation)
 
     def forward(self, state, action):
         """
@@ -45,6 +47,8 @@ class Critic(nn.Module):
         states and actions pairs to Q-values
         """
         x = torch.cat((state, action), dim=1)
-        for layer in self.layers:
-            x = layer(x)
-        return x
+        for layer in self.layers[-1]:
+            x = self.hidden_activation(layer(x))
+        # No activatioin in last layer
+        q = self.layers[-1](x)
+        return q
