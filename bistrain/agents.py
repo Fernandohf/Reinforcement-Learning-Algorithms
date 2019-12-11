@@ -50,7 +50,7 @@ class A2CAgent(BaseAgent):
 
         # Critic Network
         self.config.activate_subsection("CRITIC")
-        self.critic = Critic(self.config.STATE_SIZE, self.config.ACTION_SIZE,
+        self.critic = FCCritic(self.config.STATE_SIZE, self.config.ACTION_SIZE,
                              self.config.HIDDEN_SIZE,
                              self.config.SEED).to(self.config.DEVICE)
         self.critic_optimizer = self._set_optimizer(self.critic.parameters())
