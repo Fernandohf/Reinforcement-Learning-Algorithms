@@ -119,7 +119,7 @@ class FCActorContinuous(nn.Module):
         Build an actor network that maps states to actions
         """
         x = state
-        for layer in self.layers[-2]:
+        for layer in self.layers[:-2]:
             x = self.hidden_activation(layer(x))
         
         # Distribution

@@ -54,14 +54,14 @@ class FCCritic(nn.Module):
         return q
 
 
-class LSTMCritic(nn.module):
+class LSTMCritic(nn.Module):
     """
     Basic critic network with LSTM architecture.
     
     Receives a sequence of states/actions to output q-value function.
     """
     def __init__(self, state_size, action_size, num_layers=2,
-                 hidden_size=128, seed=42, dropout=.1):
+                 hidden_size=128, seed=42, dropout=0):
         """
         Initialize parameters and build model.
 
@@ -90,7 +90,6 @@ class LSTMCritic(nn.module):
         
     def forward(self, state, action):
         """
-        TODO
         Propagates critic network that maps
         states and actions pairs to Q-values
         """
