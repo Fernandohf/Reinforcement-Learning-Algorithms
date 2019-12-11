@@ -3,7 +3,6 @@ Networks architectures for critic/value function.
 """
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 
 class FCCritic(nn.Module):
@@ -39,7 +38,7 @@ class FCCritic(nn.Module):
             self.layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
 
         # Activation hidden
-        self.hidden_activation = getattr(F, hidden_activation)
+        self.hidden_activation = getattr(torch, hidden_activation)
 
     def forward(self, state, action):
         """

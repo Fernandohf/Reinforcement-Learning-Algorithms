@@ -2,7 +2,6 @@
 Networks architectures for Actors/Policy.
 """
 import torch
-import torch.nn.functional as F
 from torch import nn
 from torch.distributions import Normal, Categorical
 
@@ -44,10 +43,10 @@ class FCActorDiscrete(nn.Module):
             self.layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
         
         # Activation hidden
-        self.hidden_activation = getattr(F, hidden_activation)
+        self.hidden_activation = getattr(torch, hidden_activation)
 
         # Ouput activation
-        self.output_activation = getattr(F, output_activation)
+        self.output_activation = getattr(torch, output_activation)
 
     def forward(self, state):
         """
@@ -106,11 +105,11 @@ class FCActorContinuous(nn.Module):
                 self.layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))    
 
         # Activation hidden
-        self.hidden_activation = getattr(F, hidden_activation)
+        self.hidden_activation = getattr(torch, hidden_activation)
 
         # Ouput activation
-        self.output_loc_activation = getattr(F, output_loc_activation)
-        self.output_scale_activation = getattr(F, output_scale_activation)
+        self.output_loc_activation = getattr(torch, output_loc_activation)
+        self.output_scale_activation = getattr(torch, output_scale_activation)
         
         self.output_loc_scaler = output_loc_scaler
 
