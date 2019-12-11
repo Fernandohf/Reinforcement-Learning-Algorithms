@@ -9,7 +9,7 @@ import torch.optim as optim
 
 from .base.base_agent import BaseAgent
 from .networks.actors import FCActorContinuous
-from .networks.critics import Critic
+from .networks.critics import FCCritic
 
 #  from utils import n_step_boostrap
 
