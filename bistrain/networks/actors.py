@@ -10,10 +10,8 @@ class FCActorDiscrete(nn.Module):
     """
     Fully connected policy/actor network model for discrete action spaces
     """
-
     def __init__(self, state_size, action_size, hidden_sizes=(128, 64),
-                 seed=42, hidden_activation='relu',
-                 output_activation='log_sofmax',):
+                 seed=42, hidden_activation='relu'):
         """
         Initialize parameters and build model.
 
@@ -29,8 +27,6 @@ class FCActorDiscrete(nn.Module):
             Random seed
         hidden_activation: str
             Hidden units activation function
-        output_activation: str
-            Ouput activation function
         """
         super().__init__()
         # Set seed
@@ -45,9 +41,6 @@ class FCActorDiscrete(nn.Module):
         # Activation hidden
         self.hidden_activation = getattr(torch, hidden_activation)
 
-        # Ouput activation
-        self.output_activation = getattr(torch, output_activation)
-
     def forward(self, state):
         """
         Build an actor network that maps states to actions probabilities
@@ -56,12 +49,12 @@ class FCActorDiscrete(nn.Module):
         for layer in self.layers[:-1]:
             x = self.hidden_activation(layer(x))
         # Logsoftmax for numerical stability
-        logits = self.output_activation(self.layers[-1](x))
+        logits = self.layers[-1](x)
         
         # Distribution
         dist = Categorical(logits=logits)
 
-        return dist.sample() 
+        return dist.sample().view(-1, 1)
 
 
 class FCActorContinuous(nn.Module):
@@ -72,7 +65,7 @@ class FCActorContinuous(nn.Module):
     def __init__(self, state_size, action_size,
                  hidden_sizes=(128, 64), seed=42, hidden_activation='relu',
                  output_loc_activation='tanh', output_scale_activation='relu',
-                 output_loc_scaler=2):
+                 output_loc_scaler=2, output_range=(-2., 2.)):
         """
         Initialize parameters and build model.
 
@@ -101,7 +94,7 @@ class FCActorContinuous(nn.Module):
         for i in range(len(layers_sizes) - 1):
             self.layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
             # duplicate last layer
-            if i == len(layers_sizes) - 1:
+            if i == len(layers_sizes) - 2:
                 self.layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))    
 
         # Activation hidden
@@ -112,18 +105,21 @@ class FCActorContinuous(nn.Module):
         self.output_scale_activation = getattr(torch, output_scale_activation)
         
         self.output_loc_scaler = output_loc_scaler
+        self.saturation = nn.Hardtanh(*output_range)
 
     def forward(self, state):
         """
         Build an actor network that maps states to actions
         """
+        # Propagates
         x = state
         for layer in self.layers[:-2]:
             x = self.hidden_activation(layer(x))
         
         # Distribution
-        loc = self.output_loc_activation(x) * self.output_loc_scaler
-        scale = self.output_scale_activation(x)
+        loc = self.output_loc_activation(self.layers[-2](x)) * self.output_loc_scaler
+        scale = self.output_scale_activation(self.layers[-1](x))
         
+        # Batch size
         dist = Normal(loc=loc, scale=scale)
-        return dist.sample()
+        return self.saturation(dist.sample())

@@ -46,7 +46,7 @@ class FCCritic(nn.Module):
         states and actions pairs to Q-values
         """
         x = torch.cat((state, action), dim=1)
-        for layer in self.layers[-1]:
+        for layer in self.layers[:-1]:
             x = self.hidden_activation(layer(x))
         # No activatioin in last layer
         q = self.layers[-1](x)
@@ -56,7 +56,7 @@ class FCCritic(nn.Module):
 class LSTMCritic(nn.Module):
     """
     Basic critic network with LSTM architecture.
-    
+
     Receives a sequence of states/actions to output q-value function.
     """
     def __init__(self, state_size, action_size, num_layers=2,
@@ -86,7 +86,7 @@ class LSTMCritic(nn.Module):
         # Model
         self.lstm = nn.LSTM(state_size + action_size, hidden_size, num_layers,
                             batch_first=True, dropout=dropout)
-        
+
     def forward(self, state, action):
         """
         Propagates critic network that maps
@@ -94,5 +94,5 @@ class LSTMCritic(nn.Module):
         """
         x = torch.cat((state, action), dim=1)
         # TODO
-        
+
         return x
