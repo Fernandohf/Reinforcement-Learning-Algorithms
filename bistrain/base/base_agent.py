@@ -53,17 +53,22 @@ class BaseAgent(ABC):
                 policy = FCActorContinuous(self.config.STATE_SIZE,
                                            self.config.ACTION_SIZE,
                                            tuple(self.config.HIDDEN_SIZE),
-                                           self.config.SEED).to(self.config
-                                                                .DEVICE)
+                                           self.config.SEED,
+                                           self.config.HIDDEN_ACTIV,
+                                           self.config.OUTPUT_LOC_ACTIV,
+                                           self.config.OUTPUT_SCALE_ACTIV,
+                                           self.config.OUTPUT_LOC_SCALER,
+                                           (self.config.ACTION_MIN,
+                                            self.config.ACTION_MAX))
             elif self.config.ACTION_SPACE == 'discrete':
                 policy = FCActorDiscrete(self.config.STATE_SIZE,
                                          self.config.ACTION_SIZE,
                                          tuple(self.config.HIDDEN_SIZE),
-                                         self.config.SEED).to(self.config
-                                                              .DEVICE)
+                                         self.config.SEED,
+                                         self.config.HIDDEN_ACTIV)
         # Deactivate subsection
         self.config.deactivate_subsection()
-        return policy
+        return policy.to(self.config.DEVICE)
 
     def _set_val_func(self):
         self.config.activate_subsection("CRITIC")
