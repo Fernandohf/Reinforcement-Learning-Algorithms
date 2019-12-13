@@ -42,7 +42,7 @@ class BaseAgent(ABC):
         else:
             # Default
             noise = GaussianNoise(self.config)
-        self.config.activate_sections("AGENT")
+        self.config.deactivate_subsection()
         return noise
 
     def _set_policy(self):
@@ -61,6 +61,8 @@ class BaseAgent(ABC):
                                          tuple(self.config.HIDDEN_SIZE),
                                          self.config.SEED).to(self.config
                                                               .DEVICE)
+        # Deactivate subsection
+        self.config.deactivate_subsection()
         return policy
 
     def _set_val_func(self):
@@ -75,6 +77,8 @@ class BaseAgent(ABC):
                                   self.config.ACTION_SIZE,
                                   tuple(self.config.HIDDEN_SIZE),
                                   self.config.SEED).to(self.config.DEVICE)
+        # Deactivate subsection
+        self.config.deactivate_subsection()
         return val_func
 
     @abstractmethod
