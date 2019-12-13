@@ -9,7 +9,7 @@ import torch.optim as optim
 
 from .base.base_agent import BaseAgent
 from .networks.actors import FCActorContinuous
-from .networks.critics import Critic
+from .networks.critics import FCCritic
 
 #  from utils import n_step_boostrap
 
@@ -33,13 +33,14 @@ class A2CAgent(BaseAgent):
 
         Parameters
         ----------
-        config: str
-            Configuration file
+        config_file: str
+            Path to configuration file
         """
         # Base class
         super().__init__(config_file)
 
         # Actor Network
+        # TODO _set_actor with actor_type = discrete/continuous/lstm
         self.config.activate_subsection("ACTOR")
         self.actor = FCActorContinuous(self.config.STATE_SIZE,
                                        self.config.ACTION_SIZE,
@@ -49,38 +50,80 @@ class A2CAgent(BaseAgent):
         self.config.deactivate_subsection()
 
         # Critic Network
+        # TODO _set_critic
         self.config.activate_subsection("CRITIC")
-        self.critic = Critic(self.config.STATE_SIZE, self.config.ACTION_SIZE,
-                             self.config.HIDDEN_SIZE,
-                             self.config.SEED).to(self.config.DEVICE)
+        self.critic = FCCritic(self.config.STATE_SIZE, self.config.ACTION_SIZE,
+                               self.config.HIDDEN_SIZE,
+                               self.config.SEED).to(self.config.DEVICE)
         self.critic_optimizer = self._set_optimizer(self.critic.parameters())
         self.config.deactivate_subsection()
 
         # Noise process
         self.noise = self._set_noise()
 
-    def act(self, state, add_noise=True):
-        """Returns actions for given state as per current policy."""
-        state = torch.from_numpy(state).float().to(device)
+    def act(self, state, explore=True):
+        """
+        Returns actions for given state and current policy.
+
+        Parameters
+        ----------
+        state: torch.Tensor
+            Current states
+        explore: bool
+            Weather or not add noise to the actions
+        """
+        state = torch.from_numpy(state).float().to(self.config.DEVICE)
 
         # Forwards pass on policy
         self.actor.eval()
-        with torch.no_grad():
-            action, _ = self.actor(state)
-            action = action.cpu().data.numpy()
-        self.actor.train()
-        # Noise
-        if add_noise:
-            action += self.noise.sample()
-        # Clipped action
-        return np.clip(action, ACTION_MIN, ACTION_MAX)
+
+        # Continuous actions
+        if self.config.ACTION_SPACE == "continuous":
+            with torch.no_grad():
+                action, _ = self.actor(state)
+                action = action.cpu().data.numpy()
+            self.actor.train()
+            # Noise
+            if explore:
+                action += self.noise.sample()
+            # Clipped action
+            action = np.clip(action,
+                             self.config.ACTION_MIN,
+                             self.config.ACTION_MAX)
+        # Discrete Actions
+        elif self.config.ACTION_SPACE == "discrete":
+            with torch.no_grad():
+                action, _ = self.actor(state)
+                action = action.cpu().data.numpy()
+            self.actor.train()
+            # Noise
+            if explore:
+                action = self.noise.sample(action)
+
+        return action
 
     def reset(self):
         self.noise.reset()
 
-    def step(self):
-        # TODO
-        pass
+    def step(self, experience):
+        """
+        Records experiences (S, A, R, S', dones) ready to be sampled
+
+        Parameters
+        ----------
+        experience: tuple
+            Tuple of Tensors with (state, action, reward, next_state, done)
+        """
+        # Save experience / reward
+        self.memory.add()
+        self._step_count += 1
+
+        # Learn, if enough samples are available in memory
+        if (len(self.memory) > self.cofig.BATCH_SIZE
+           and self._step_count >= self.config.UPDATE_EVERY):
+            self._step_count = 0
+            experiences = self.memory.sample()
+            self.learn(experiences, self.set.GAMMA)
 
     def _learn(self, states, actions, rewards, next_states, dones, gamma):
         """Update policy and value parameters using given batch of experience tuples.
