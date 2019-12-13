@@ -7,6 +7,8 @@ from torch.optim import SGD, Adam, AdamW
 
 from ..utils.configuration import BisTrainConfiguration
 from ..utils.noise import GaussianNoise, OUNoise
+from ..networks.actors import FCActorDiscrete, FCActorContinuous
+from ..networks.critics import FCCritic, LSTMCritic
 
 
 class BaseAgent(ABC):
@@ -42,6 +44,38 @@ class BaseAgent(ABC):
             noise = GaussianNoise(self.config)
         self.config.activate_sections("AGENT")
         return noise
+
+    def _set_policy(self):
+        self.config.activate_subsection("ACTOR")
+        # FC architecture
+        if self.config.ARCHITECTURE == 'fc':
+            if self.config.ACTION_SPACE == 'continuous':
+                policy = FCActorContinuous(self.config.STATE_SIZE,
+                                           self.config.ACTION_SIZE,
+                                           tuple(self.config.HIDDEN_SIZE),
+                                           self.config.SEED).to(self.config
+                                                                .DEVICE)
+            elif self.config.ACTION_SPACE == 'discrete':
+                policy = FCActorDiscrete(self.config.STATE_SIZE,
+                                         self.config.ACTION_SIZE,
+                                         tuple(self.config.HIDDEN_SIZE),
+                                         self.config.SEED).to(self.config
+                                                              .DEVICE)
+        return policy
+
+    def _set_val_func(self):
+        self.config.activate_subsection("CRITIC")
+        if self.config.ARCHITECTURE == 'fc':
+            val_func = FCCritic(self.config.STATE_SIZE,
+                                self.config.ACTION_SIZE,
+                                tuple(self.config.HIDDEN_SIZE),
+                                self.config.SEED).to(self.config.DEVICE)
+        elif self.config.ARCHITECTURE == 'lstm':
+            val_func = LSTMCritic(self.config.STATE_SIZE,
+                                  self.config.ACTION_SIZE,
+                                  tuple(self.config.HIDDEN_SIZE),
+                                  self.config.SEED).to(self.config.DEVICE)
+        return val_func
 
     @abstractmethod
     def step(self):
