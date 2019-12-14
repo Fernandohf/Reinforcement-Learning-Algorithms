@@ -4,7 +4,9 @@ import numpy as np
 import pytest
 
 from ..utils.configuration import (BisTrainConfiguration,
-                                   NoActiveSectionException, ValidationError)
+                                   NoActiveSectionException,
+                                   ValidationError,
+                                   MissingOptionError)
 from ..utils.noise import GaussianNoise, OUNoise
 
 LOCAL_FOLDER = os.path.dirname(__file__)
@@ -29,68 +31,73 @@ class TestBisTrainConfiguration():
 
     def test_invalid_key(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        a.activate_sections("AGENT")
-        with pytest.raises(KeyError):
+        a.activate_sections("A2C")
+        with pytest.raises(MissingOptionError):
             a.abc
 
     def test_activation(self):
-
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
         with pytest.raises(NoActiveSectionException):
             a.critic_hidden_size
 
     def test_dict_access1(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        assert a["AGENT"]["ACTION_SIZE"] == 2
+        assert a["GLOBAL"]["ACTION_SIZE"] == 2
 
     def test_dict_access2(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        assert a["EXPLORATION"]["SIZE"] == 2
+        assert a["GLOBAL"]["SEED"] == 42
 
     def test_dict_attr_access(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        a.activate_sections("AGENT")
+        a.activate_sections("A2C")
         assert a.CRITIC["HIDDEN_SIZE"] == [256, 128]
 
     def test_attribute_access1(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        a.activate_sections("AGENT")
+        a.activate_sections("GLOBAL")
         assert a.ACTION_SIZE == 2
 
     def test_attribute_access2(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        a.activate_sections("TRAINING")
-        assert a.DEVICE == 'cuda'
+        a.activate_sections(["A2C", "TRAINING"])
+        assert a.DEVICE == 'cpu'
 
     def test_attribute_access3(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        a.activate_sections(["AGENT", "ACTOR"])
+        a.activate_sections(["A2C", "ACTOR"])
         assert a.STATE_SIZE == 24
 
     def test_attribute_access4(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        a.activate_sections(["AGENT", "ACTOR"])
+        a.activate_sections(["A2C", "ACTOR"])
         assert a.HIDDEN_SIZE == [256, 32]
 
     def test_attribute_access5(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        a.activate_sections("AGENT")
+        a.activate_sections("A2C")
         a.activate_subsection("CRITIC")
         assert a.HIDDEN_SIZE == [256, 128]
 
     def test_attribute_access6(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        a.activate_sections("AGENT")
+        a.activate_sections("A2C")
         a.activate_subsection("CRITIC")
         assert a.STATE_SIZE == 24
 
     def test_attribute_access7(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        a.activate_sections("AGENT")
+        a.activate_sections("A2C")
         a.activate_subsection("CRITIC")
         a.deactivate_subsection()
-        with pytest.raises(KeyError):
+        with pytest.raises(MissingOptionError):
             a.HIDDEN_SIZE
+
+    def test_default_key(self):
+        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC,
+                                  default_key="A2C")
+        a.activate_sections("GLOBAL")
+        assert isinstance(a.ACTOR, dict)
 
 
 class TestGaussianNoise():
@@ -100,14 +107,14 @@ class TestGaussianNoise():
     @staticmethod
     def _create_noise():
         c = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        c["EXPLORATION"]["SIZE"] = 1
+        c["GLOBAL"]["ACTION_SIZE"] = 1
         c.activate_sections("EXPLORATION")
         n = GaussianNoise(c)
         return n
 
     def test_reset(self):
         n = self._create_noise()
-        samples = [n.sample() for i in range(100)]
+        _ = [n.sample() for i in range(100)]
         n.reset()
         assert n._eps_step == 0
 
@@ -124,7 +131,7 @@ class TestOUNoise():
     @staticmethod
     def _create_noise():
         c = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        c["EXPLORATION"]["SIZE"] = 1
+        c["GLOBAL"]["ACTION_SIZE"] = 1
         c["EXPLORATION"]["TYPE"] = 'ou'
         c.activate_sections("EXPLORATION")
         n = OUNoise(c)
@@ -132,6 +139,6 @@ class TestOUNoise():
 
     def test_reset(self):
         n = self._create_noise()
-        samples = [n.sample() for i in range(100)]
+        _ = [n.sample() for i in range(100)]
         n.reset()
         assert n.state == n.config.MEAN

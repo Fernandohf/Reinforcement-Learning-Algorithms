@@ -4,11 +4,12 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
+from torch.nn.utils import clip_grad_norm_
 
 from .base.base_agent import BaseAgent
 from .networks.actors import FCActorContinuous
 from .networks.critics import FCCritic
-from .utils.bootstraps import n_step_boostrap
+from .utils.bootstrap import n_step_boostrap
 
 # In case of being imported on notebook
 try:
@@ -36,12 +37,16 @@ class A2CAgent(BaseAgent):
         super().__init__(config_file)
 
         # Actor Network
+        self.config.activate_subsection("ACTOR")
         self.actor = self._set_policy()
         self.actor_optimizer = self._set_optimizer(self.actor.parameters())
+        self.config.deactivate_subsection()
 
         # Critic Network
-        self.actor = self._set_val_func()
+        self.config.activate_subsection("CRITIC")
+        self.critic = self._set_val_func()
         self.critic_optimizer = self._set_optimizer(self.critic.parameters())
+        self.config.deactivate_subsection()
 
         # Noise process
         self.noise = self._set_noise()
@@ -94,12 +99,14 @@ class A2CAgent(BaseAgent):
         """
         Reset the current learning episode
         """
+        # Activate training section
+        self.config.activate_subsection("TRAINING")
+
         # Noise scalling
         self.noise.reset()
         # Episode parameters
         self._gamma = self.config.GAMMA
         self._initial_states = None
-        self._step = 0
 
     def step(self, envs):
         """
@@ -117,23 +124,19 @@ class A2CAgent(BaseAgent):
         scores: array
             Rewards for each parallel environment
         """
-        # Add current step
-        self._step += 1
-        # Activate training section
-        self.config.activate_sections("TRAINING")
         # If first step
         if self._initial_states is None:
             self._initial_states = envs.reset()
         # Unroll trajectories of parallel envs
-        S, A, R, Sp, dones = n_step_boostrap(envs, self,
+        s, a, r, sp, dones = n_step_boostrap(envs, self,
                                              self._initial_states,
                                              n_step=self.config.N_STEP_BS)
-        self._learn(S, A, R, Sp, dones, self._gamma)
+        self._learn(s, a, r, sp, dones, self._gamma)
         # Start from the next state
-        self._initial_states = Sp[:, 0, :]
+        self._initial_states = sp[:, 0, :]
         # Collect scores from all parallel envs and if any has finished
-        scores = R[:, 0]
-        done = dones[:, -1].any() or (self._step > self.config.MAX_STEP)
+        scores = r[:, 0]
+        done = dones[:, -1].any()
         # Update initial gamma
         self._gamma *= self.config.GAMMA
 
@@ -197,6 +200,11 @@ class A2CAgent(BaseAgent):
         # Minimize the loss
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
+
+        # Gradient clipping
+        if self.config.GRADIENT_CLIP != 0:
+            clip_grad_norm_(self.critic.parameters(),
+                            self.config.GRADIENT_CLIP)
         self.critic_optimizer.step()
 
         # ----------------------- Update Actor ----------------------- #
@@ -204,8 +212,14 @@ class A2CAgent(BaseAgent):
         _, log_action = self.actor(curr_states)
         advantages = (Q_target.detach() - Q_expected.detach())
         actor_loss = -(log_action * advantages).mean()
+        # Minimize loss
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
+
+        # Gradient clipping
+        if self.config.GRADIENT_CLIP != 0:
+            clip_grad_norm_(self.critic.parameters(),
+                            self.config.GRADIENT_CLIP)
         self.actor_optimizer.step()
 
 
