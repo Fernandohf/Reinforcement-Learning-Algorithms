@@ -47,21 +47,23 @@ class BisTrainConfiguration(ConfigObj):
             raise ValidationError(self.validation)
 
         self._active_sections = None
-
-        # Add default section to base of dicts
-        for k, v in self[default_key].items():
-            self[k] = v
+        self._default_key = default_key
 
     def __getattr__(self, opt):
         """
-        After calling 'activate sections' values can be retrieved as attrbutes,
-        mainly to typing keys size when getting from same sections/subsections.
+        After calling 'activate sections' values are retrieved as attributes,
+        mainly to reduce typing large nested keys names after multiple
+        sections/subsections. Prioritizes inner sections in the search.
 
         Parameters
         ----------
-        option: str
+        opt: str
             Key present on 'active_sections'
 
+        Return
+        ------
+        d[opt]: dict value
+            Nested key with the given key
         """
         # if in keys
         if opt not in self.keys() and self._active_sections is None:
@@ -70,7 +72,8 @@ class BisTrainConfiguration(ConfigObj):
                 Call 'activate_sections' before accessing values.")
         else:
             # Search final section
-            _dicts = self._get_dict(self._active_sections)
+            _dicts = self._get_dict([self._default_key] +
+                                    self._active_sections)
             for d in _dicts:
                 try:
                     # Deepest section
@@ -90,7 +93,8 @@ class BisTrainConfiguration(ConfigObj):
         for section in self._active_sections:
             dicts.append(value[section])
             value = value[section]
-        return dicts
+        # Depth first
+        return reversed(dicts)
 
     @property
     def active_sections(self):
