@@ -124,4 +124,3 @@ class FCActorContinuous(nn.Module):
         # Batch size
         dist = Normal(loc=loc, scale=scale)
         return self.saturation(dist.sample())
-re
