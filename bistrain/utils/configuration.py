@@ -27,6 +27,14 @@ class ValidationError(ValueError):
                 self.msg += f"Key {k} raises {v}\n"
 
 
+class MissingOptionError(KeyError):
+    """
+    Exception classes for missing mandatory configuration
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(self, *args, **kwargs)
+
+
 # Configuration class
 class BisTrainConfiguration(ConfigObj):
     """
@@ -82,7 +90,7 @@ class BisTrainConfiguration(ConfigObj):
                     # Search upper sections
                     continue
             # Case key not found
-            raise KeyError
+            raise MissingOptionError(opt)
 
     def _get_dict(self, sections):
         """
