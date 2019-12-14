@@ -37,7 +37,7 @@ class FCActorDiscrete(nn.Module):
         layers_sizes = [state_size] + list(hidden_sizes) + [action_size]
         for i in range(len(layers_sizes) - 1):
             self.layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
-        
+
         # Activation hidden
         self.hidden_activation = getattr(torch, hidden_activation)
 
@@ -50,11 +50,12 @@ class FCActorDiscrete(nn.Module):
             x = self.hidden_activation(layer(x))
         # Logsoftmax for numerical stability
         logits = self.layers[-1](x)
-        
+
         # Distribution
         dist = Categorical(logits=logits)
-
-        return dist.sample().view(-1, 1)
+        sample = dist.rsample().view(-1, 1)
+        log_probs = dist.log_prob(sample)
+        return sample, log_probs
 
 
 class FCActorContinuous(nn.Module):
@@ -95,7 +96,7 @@ class FCActorContinuous(nn.Module):
             self.layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
             # duplicate last layer
             if i == len(layers_sizes) - 2:
-                self.layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))    
+                self.layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
 
         # Activation hidden
         self.hidden_activation = getattr(torch, hidden_activation)
@@ -103,7 +104,7 @@ class FCActorContinuous(nn.Module):
         # Ouput activation
         self.output_loc_activation = getattr(torch, output_loc_activation)
         self.output_scale_activation = getattr(torch, output_scale_activation)
-        
+
         self.output_loc_scaler = output_loc_scaler
         self.saturation = nn.Hardtanh(*output_range)
 
@@ -115,11 +116,12 @@ class FCActorContinuous(nn.Module):
         x = state
         for layer in self.layers[:-2]:
             x = self.hidden_activation(layer(x))
-        
+
         # Distribution
-        loc = self.output_loc_activation(self.layers[-2](x)) * self.output_loc_scaler
+        loc = (self.output_loc_activation(self.layers[-2](x)) *
+               self.output_loc_scaler)
         scale = self.output_scale_activation(self.layers[-1](x))
-        
-        # Batch size
         dist = Normal(loc=loc, scale=scale)
-        return self.saturation(dist.sample())
+        sample = dist.rsample()
+        log_probs = dist.log_prob(sample)
+        return self.saturation(sample), log_probs
