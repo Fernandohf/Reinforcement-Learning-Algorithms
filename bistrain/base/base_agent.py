@@ -49,37 +49,45 @@ class BaseAgent(ABC):
         self.config.activate_subsection("ACTOR")
         # FC architecture
         if self.config.ARCHITECTURE == 'fc':
+            # Continuous
             if self.config.ACTION_SPACE == 'continuous':
                 policy = FCActorContinuous(self.config.STATE_SIZE,
                                            self.config.ACTION_SIZE,
-                                           tuple(self.config.HIDDEN_SIZE),
-                                           self.config.SEED).to(self.config
-                                                                .DEVICE)
+                                           self.config.HIDDEN_SIZE,
+                                           self.config.SEED,
+                                           self.config.HIDDEN_ACTIV,
+                                           self.config.OUTPUT_LOC_ACTIV,
+                                           self.config.OUTPUT_SCALE_ACTIV,
+                                           self.config.OUTPUT_LOC_SCALER,
+                                           self.config.ACTION_RANGE)
+            # Discrete
             elif self.config.ACTION_SPACE == 'discrete':
                 policy = FCActorDiscrete(self.config.STATE_SIZE,
                                          self.config.ACTION_SIZE,
-                                         tuple(self.config.HIDDEN_SIZE),
-                                         self.config.SEED).to(self.config
-                                                              .DEVICE)
+                                         self.config.HIDDEN_SIZE,
+                                         self.config.SEED,
+                                         self.config.HIDDEN_ACTIV)
+        # TODO LSTM architecture ACTORS
         # Deactivate subsection
         self.config.deactivate_subsection()
-        return policy
+        return policy.to(self.config.DEVICE)
 
     def _set_val_func(self):
         self.config.activate_subsection("CRITIC")
         if self.config.ARCHITECTURE == 'fc':
             val_func = FCCritic(self.config.STATE_SIZE,
                                 self.config.ACTION_SIZE,
-                                tuple(self.config.HIDDEN_SIZE),
-                                self.config.SEED).to(self.config.DEVICE)
+                                self.config.HIDDEN_SIZE,
+                                self.config.SEED)
         elif self.config.ARCHITECTURE == 'lstm':
             val_func = LSTMCritic(self.config.STATE_SIZE,
                                   self.config.ACTION_SIZE,
-                                  tuple(self.config.HIDDEN_SIZE),
-                                  self.config.SEED).to(self.config.DEVICE)
+                                  self.config.HIDDEN_SIZE,
+                                  self.config.SEED)
         # Deactivate subsection
         self.config.deactivate_subsection()
-        return val_func
+        # Move to device and return
+        return val_func.to(self.config.DEVICE)
 
     @abstractmethod
     def step(self):
