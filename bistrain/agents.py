@@ -8,7 +8,7 @@ import torch.optim as optim
 from .base.base_agent import BaseAgent
 from .networks.actors import FCActorContinuous
 from .networks.critics import FCCritic
-from .utils.bootstraps import n_step_boostrap
+from .utils.bootstrap import n_step_boostrap
 
 # In case of being imported on notebook
 try:
@@ -99,7 +99,8 @@ class A2CAgent(BaseAgent):
         # Episode parameters
         self._gamma = self.config.GAMMA
         self._initial_states = None
-        self._step = 0
+        # Activate training section
+        self.config.activate_subsection("TRAINING")
 
     def step(self, envs):
         """
@@ -117,23 +118,19 @@ class A2CAgent(BaseAgent):
         scores: array
             Rewards for each parallel environment
         """
-        # Add current step
-        self._step += 1
-        # Activate training section
-        self.config.activate_sections("TRAINING")
         # If first step
         if self._initial_states is None:
             self._initial_states = envs.reset()
         # Unroll trajectories of parallel envs
-        S, A, R, Sp, dones = n_step_boostrap(envs, self,
+        s, a, r, sp, dones = n_step_boostrap(envs, self,
                                              self._initial_states,
                                              n_step=self.config.N_STEP_BS)
-        self._learn(S, A, R, Sp, dones, self._gamma)
+        self._learn(s, a, r, sp, dones, self._gamma)
         # Start from the next state
-        self._initial_states = Sp[:, 0, :]
+        self._initial_states = sp[:, 0, :]
         # Collect scores from all parallel envs and if any has finished
-        scores = R[:, 0]
-        done = dones[:, -1].any() or (self._step > self.config.MAX_STEP)
+        scores = r[:, 0]
+        done = dones[:, -1].any()
         # Update initial gamma
         self._gamma *= self.config.GAMMA
 
