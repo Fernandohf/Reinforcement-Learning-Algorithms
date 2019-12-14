@@ -54,7 +54,7 @@ class BisTrainConfiguration(ConfigObj):
     """
 
     def __init__(self, *args, configspec="config.spec",
-                 default_key="DEFAULT", **kwargs):
+                 default_key="GLOBAL", **kwargs):
         super().__init__(*args, configspec=configspec, **kwargs)
 
         # Perform validation
@@ -92,8 +92,7 @@ class BisTrainConfiguration(ConfigObj):
                 Call 'activate_sections' before accessing values.")
         else:
             # Search final section
-            _dicts = self._get_dict([self._default_key] +
-                                    self._active_sections)
+            _dicts = self._get_dict(self._active_sections)
             for d in _dicts:
                 try:
                     # Deepest section
@@ -108,11 +107,13 @@ class BisTrainConfiguration(ConfigObj):
         """
         Auxiliar function to retrieve nested dict in access order
         """
-        dicts = []
         value = self
+        # Add default dict
+        dicts = [value[self._default_key]]
         for section in self._active_sections:
             dicts.append(value[section])
             value = value[section]
+
         # Depth first
         return reversed(dicts)
 

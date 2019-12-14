@@ -19,7 +19,8 @@ class BaseAgent(ABC):
     def __init__(self, config_file):
         # Load configuration
         self.config = BisTrainConfiguration(config_file)
-        self.config.activate_sections("AGENT")
+        agent = self.config["GLOBAL"]["AGENT"].upper()
+        self.config.activate_sections(agent.upper())
         super().__init__()
 
     def _set_optimizer(self, parameters):
@@ -36,17 +37,14 @@ class BaseAgent(ABC):
         return optimizer
 
     def _set_noise(self):
-        self.config.activate_sections("EXPLORATION")
-        if self.config.TYPE == 'ou':
+        if self.config["EXPLORATION"]["TYPE"] == 'ou':
             noise = OUNoise(self.config)
         else:
             # Default
             noise = GaussianNoise(self.config)
-        self.config.deactivate_subsection()
         return noise
 
     def _set_policy(self):
-        self.config.activate_subsection("ACTOR")
         # FC architecture
         if self.config.ARCHITECTURE == 'fc':
             # Continuous
@@ -68,12 +66,9 @@ class BaseAgent(ABC):
                                          self.config.SEED,
                                          self.config.HIDDEN_ACTIV)
         # TODO LSTM architecture ACTORS
-        # Deactivate subsection
-        self.config.deactivate_subsection()
         return policy.to(self.config.DEVICE)
 
     def _set_val_func(self):
-        self.config.activate_subsection("CRITIC")
         if self.config.ARCHITECTURE == 'fc':
             val_func = FCCritic(self.config.STATE_SIZE,
                                 self.config.ACTION_SIZE,
@@ -84,8 +79,6 @@ class BaseAgent(ABC):
                                   self.config.ACTION_SIZE,
                                   self.config.HIDDEN_SIZE,
                                   self.config.SEED)
-        # Deactivate subsection
-        self.config.deactivate_subsection()
         # Move to device and return
         return val_func.to(self.config.DEVICE)
 

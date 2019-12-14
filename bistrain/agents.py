@@ -19,7 +19,6 @@ except NameError:
     from tqdm import tqdm
 
 
-
 class A2CAgent(BaseAgent):
     """
     Advantage Actor Critic (A2C) Agent
@@ -38,12 +37,16 @@ class A2CAgent(BaseAgent):
         super().__init__(config_file)
 
         # Actor Network
+        self.config.activate_subsection("ACTOR")
         self.actor = self._set_policy()
         self.actor_optimizer = self._set_optimizer(self.actor.parameters())
+        self.config.deactivate_subsection()
 
         # Critic Network
-        self.actor = self._set_val_func()
+        self.config.activate_subsection("CRITIC")
+        self.critic = self._set_val_func()
         self.critic_optimizer = self._set_optimizer(self.critic.parameters())
+        self.config.deactivate_subsection()
 
         # Noise process
         self.noise = self._set_noise()
@@ -96,13 +99,14 @@ class A2CAgent(BaseAgent):
         """
         Reset the current learning episode
         """
+        # Activate training section
+        self.config.activate_subsection("TRAINING")
+
         # Noise scalling
         self.noise.reset()
         # Episode parameters
         self._gamma = self.config.GAMMA
         self._initial_states = None
-        # Activate training section
-        self.config.activate_subsection("TRAINING")
 
     def step(self, envs):
         """
