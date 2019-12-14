@@ -19,12 +19,24 @@ class ValidationError(ValueError):
     Exception classes for invalid configuration
     """
 
-    def __init__(self, validation, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
-        self.msg = f"The following keys have invalid values:\n"
-        for k, v in validation.items():
-            if not v:
-                self.msg += f"Key {k} raises {v}\n"
+    def __init__(self, validation_dict):
+        message = "The following keys have invalid values:\n"
+        message = message + self._failed_validation(validation_dict)
+        super().__init__(message)
+
+    def _failed_validation(self, _dict, prev_msg="", depth=0):
+        msg = prev_msg
+        for k, v in _dict.items():
+            if v is True:
+                continue
+            elif isinstance(v, dict):
+                sec = "\t" * depth + f"From section '{k}':\n"
+                msg += self._failed_validation(v, sec, depth+1)
+            elif v is False:
+                msg += "\t" * depth + f"Mandatory key '{k}' is missing\n"
+            else:
+                msg += "\t" * depth + f"Key {k} raises {v}\n"
+        return msg
 
 
 class MissingOptionError(KeyError):
@@ -108,7 +120,7 @@ class BisTrainConfiguration(ConfigObj):
     def active_sections(self):
         return self._active_sections
 
-    def activate_sections(self, sections):
+    def activate_sections(self, sections=None):
         """
         When sections are active, values can be directly accessed with
         attribute.
@@ -118,6 +130,8 @@ class BisTrainConfiguration(ConfigObj):
         sections: str or list
             Section to be used by default when accessing values as attributes
         """
+        if sections is None:
+            self._active_sections = [self._default_key]
         if not isinstance(sections, list):
             sections = [sections]
         self._active_sections = sections
