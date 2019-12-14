@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
+from torch.nn.utils import clip_grad_norm_
 
 from .base.base_agent import BaseAgent
 from .networks.actors import FCActorContinuous
@@ -16,6 +17,7 @@ try:
     from tqdm import tqdm_notebook as tqdm
 except NameError:
     from tqdm import tqdm
+
 
 
 class A2CAgent(BaseAgent):
@@ -194,6 +196,11 @@ class A2CAgent(BaseAgent):
         # Minimize the loss
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
+
+        # Gradient clipping
+        if self.config.GRADIENT_CLIP != 0:
+            clip_grad_norm_(self.critic.parameters(),
+                            self.config.GRADIENT_CLIP)
         self.critic_optimizer.step()
 
         # ----------------------- Update Actor ----------------------- #
@@ -201,8 +208,14 @@ class A2CAgent(BaseAgent):
         _, log_action = self.actor(curr_states)
         advantages = (Q_target.detach() - Q_expected.detach())
         actor_loss = -(log_action * advantages).mean()
+        # Minimize loss
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
+
+        # Gradient clipping
+        if self.config.GRADIENT_CLIP != 0:
+            clip_grad_norm_(self.critic.parameters(),
+                            self.config.GRADIENT_CLIP)
         self.actor_optimizer.step()
 
 
