@@ -99,9 +99,15 @@ class TestLocalConfig():
         c = LocalConfig(b.CRITIC)
         assert c.OPTIMIZER == 'adam'
 
-    def test_invalidkey(self):
+    def test_invalidkey1(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
         a["A2C"]["a b c"] = 4
+        with pytest.raises(InvalidKey):
+            LocalConfig(a["A2C"])
+
+    def test_invalidkey2(self):
+        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
+        a["A2C"]["items"] = 4
         with pytest.raises(InvalidKey):
             LocalConfig(a["A2C"])
 

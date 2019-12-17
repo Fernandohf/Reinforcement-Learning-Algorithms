@@ -96,6 +96,7 @@ class LocalConfig():
     """
     Local configuration class with attribute accessors.
     """
+    invalid_keys = ["items", "clear", "add", "invalid_keys"]
 
     def __init__(self, section):
         try:
@@ -119,7 +120,8 @@ class LocalConfig():
                 raise InvalidKey()
 
     def _valid_key(self, key):
-        return " " not in key
+        valid = not any([k == key for k in self.invalid_keys])
+        return (" " not in key) and valid
 
     def __repr__(self):
         return repr(self._dict)

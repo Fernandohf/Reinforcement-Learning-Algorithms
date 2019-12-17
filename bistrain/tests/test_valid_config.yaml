@@ -26,14 +26,14 @@ STATE_SIZE = 24
   GAMMA = 0.99
   N_STEP_BS = 4
 
-  [[EXPLORATION]]
-  TYPE = gaussian
-  SIZE = 2
-  EPS_BETA = 0.1
-  EPS_MIN = 0.01
-  MEAN = 0.0
-  SIGMA = 0.4
-  THETA = 0.01
+[EXPLORATION]
+TYPE = gaussian
+SIZE = 2
+EPS_BETA = 0.1
+EPS_MIN = 0.01
+MEAN = 0.0
+SIGMA = 0.4
+THETA = 0.01
 
 [TRAINER]
 MAX_T = 200
