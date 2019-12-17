@@ -36,7 +36,8 @@ class FCActorDiscrete(nn.Module):
         self.layers = nn.ModuleList()
         layers_sizes = [state_size] + list(hidden_sizes) + [action_size]
         for i in range(len(layers_sizes) - 1):
-            self.layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
+            self.layers.append(nn.Linear(layers_sizes[i],
+                                         layers_sizes[i + 1]))
 
         # Activation hidden
         self.hidden_activation = getattr(torch, hidden_activation)
@@ -121,6 +122,7 @@ class FCActorContinuous(nn.Module):
         loc = (self.output_loc_activation(self.layers[-2](x)) *
                self.output_loc_scaler)
         scale = self.output_scale_activation(self.layers[-1](x))
+
         dist = Normal(loc=loc, scale=scale)
         sample = dist.rsample()
         log_probs = dist.log_prob(sample)

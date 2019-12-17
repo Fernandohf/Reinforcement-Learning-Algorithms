@@ -2,7 +2,6 @@
 Noise processes to add to actions
 """
 import random
-from copy import copy
 
 import numpy as np
 
@@ -25,7 +24,12 @@ class GaussianNoise(BaseNoise):
         """
         # Base class initialization
         super().__init__(config)
-
+        # Parameters
+        self.eps_beta = self.config.EPS_BETA
+        self.mean = self.config.MEAN
+        self.std = self.config.SIGMA
+        self.size = self.config.ACTION_SIZE
+        self.eps_min = self.config.EPS_MIN
         self.reset()
 
     def reset(self):
@@ -33,7 +37,7 @@ class GaussianNoise(BaseNoise):
         Reset the internal decay status to starting values
         """
         # Reset Epsilon
-        self._eps = self.config.EPS_BETA
+        self._eps = self.eps_beta
         self._eps_step = 0
 
     def sample(self):
@@ -47,14 +51,14 @@ class GaussianNoise(BaseNoise):
         """
         # Update epsilon
         self._eps = max(
-            [np.exp(-self.config.EPS_BETA * self._eps_step),
-             self.config.EPS_MIN])
+            [np.exp(-self.eps_beta * self._eps_step),
+             self.eps_min])
         self._eps_step += 1
 
         # Sample
-        return np.random.normal(loc=self.config.MEAN,
-                                scale=self.config.SIGMA,
-                                size=self.config.SIZE) * self._eps
+        return np.random.normal(loc=self.mean,
+                                scale=self.std,
+                                size=self.size) * self._eps
 
 
 class OUNoise(BaseNoise):
@@ -80,7 +84,7 @@ class OUNoise(BaseNoise):
         """
         Reset the internal state to mean
         """
-        self.state = np.ones(self.config.SIZE) * self.config.MEAN
+        self.state = np.ones(self.config.ACTION_SIZE) * self.config.MEAN
 
     def sample(self):
         """

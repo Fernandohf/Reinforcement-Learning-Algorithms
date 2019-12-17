@@ -1,8 +1,20 @@
 """
 Handle configurations files
 """
+import logging
+from copy import deepcopy
 from configobj import ConfigObj
 from validate import Validator
+
+
+class InvalidKey(ValueError):
+    """
+    Exception classes for no active section
+    """
+
+    def __init__(self, *args, **kwargs):
+        msg = "Keys should have valid Python names"
+        super().__init__(self, msg, *args, **kwargs)
 
 
 class NoActiveSectionException(AttributeError):
@@ -19,107 +31,103 @@ class ValidationError(ValueError):
     Exception classes for invalid configuration
     """
 
-    def __init__(self, validation, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
-        self.msg = f"The following keys have invalid values:\n"
-        for k, v in validation.items():
-            if not v:
-                self.msg += f"Key {k} raises {v}\n"
+    def __init__(self, validation_dict):
+        message = "The following keys have invalid values:\n"
+        message = message + self._failed_validation(validation_dict)
+        super().__init__(message)
+
+    def _failed_validation(self, _dict, prev_msg="", depth=0):
+        msg = prev_msg
+        for k, v in _dict.items():
+            if v is True:
+                continue
+            elif isinstance(v, dict):
+                sec = "\t" * depth + f"From section '{k}':\n"
+                msg += self._failed_validation(v, sec, depth+1)
+            elif v is False:
+                msg += "\t" * depth + f"Mandatory key '{k}' is missing\n"
+            else:
+                msg += "\t" * depth + f"Key {k} raises {v}\n"
+        return msg
 
 
-# Configuration class
+# Main configuration class
 class BisTrainConfiguration(ConfigObj):
     """
-    Extended class with dot access and built-in validation check
+    Extended class with built-in validation
     """
 
-    def __init__(self, *args, configspec="config.spec", **kwargs):
+    def __init__(self, *args, configspec="config.spec",
+                 default_key="GLOBAL", **kwargs):
         super().__init__(*args, configspec=configspec, **kwargs)
 
         # Perform validation
         self.validator = Validator()
         self.validation = self.validate(self.validator, preserve_errors=True)
-        print(self.validation)
         if not isinstance(self.validation, dict):
-            print("File validation successfully!")
+            logging.info("File validation successfully!")
         else:
+            logging.error("File validation failed!")
             raise ValidationError(self.validation)
 
-        self._active_sections = None
+        # Add default values
+        self._default_key = default_key
 
-    def __getattr__(self, opt):
-        """
-        After calling 'activate sections' values can be retrieved as attrbutes,
-        mainly to typing keys size when getting from same sections/subsections.
-
-        Parameters
-        ----------
-        option: str
-            Key present on 'active_sections'
-
-        """
-        # if in keys
-        if opt not in self.keys() and self._active_sections is None:
-            raise NoActiveSectionException(
-                "No active section has been defined yet.\
-                Call 'activate_sections' before accessing values.")
+    def __getitem__(self, key):
+        if key in self.keys():
+            return super().__getitem__(key)
+        elif key in self[self._default_key].keys():
+            # Search on default key
+            return self[self._default_key][key]
         else:
-            # Search final section
-            _dicts = self._get_dict(self._active_sections)
-            for d in _dicts:
-                try:
-                    # Deepest section
-                    return d[opt]
-                except KeyError:
-                    # Search upper sections
-                    continue
-            # Case key not found
             raise KeyError
 
-    def _get_dict(self, sections):
-        """
-        Auxiliar function to retrieve nested dict in access order
-        """
-        dicts = []
-        value = self
-        for section in self._active_sections:
-            dicts.append(value[section])
-            value = value[section]
-        return dicts
+    def dict_copy(self):
+        _copy = deepcopy(self)
+        del _copy[self._default_key]
+        # Add default values
+        for k, v in self[self._default_key].items():
+            _copy[k] = v
 
-    @property
-    def active_sections(self):
-        return self._active_sections
+        return _copy
 
-    def activate_sections(self, sections):
-        """
-        When sections are active, values can be directly accessed with
-        attribute.
 
-        Parameters
-        ----------
-        sections: str or list
-            Section to be used by default when accessing values as attributes
-        """
-        if not isinstance(sections, list):
-            sections = [sections]
-        self._active_sections = sections
+class LocalConfig():
+    """
+    Local configuration class with attribute accessors.
+    """
+    invalid_keys = ["items", "clear", "add", "invalid_keys"]
 
-    def activate_subsection(self, subsection):
-        """
-        Append subsection to active sections.
+    def __init__(self, section):
+        try:
+            # If section
+            self._dict = section.dict()
+            # Navigate upwards to add defaults
+            while section.parent is not section:
+                section = section.parent
+            for k, v in section[section._default_key].items():
+                self._dict[k] = v
+        except AttributeError:
+            self._dict = section
 
-        Parameters
-        ----------
-        subsection: str
-            Subsection to be activated
-        """
-        sections = self._active_sections + [subsection]
-        self.activate_sections(sections)
+        # Populates key values as attibutes
+        for k, v in self._dict.items():
+            if isinstance(v, dict):
+                v = LocalConfig(v)
+            if self._valid_key(k):
+                self.__setattr__(k, v)
+            else:
+                raise InvalidKey()
 
-    def deactivate_subsection(self):
-        """
-        Remove last active subsection
-        """
-        sections = self._active_sections[:-1]
-        self.activate_sections(sections)
+    def _valid_key(self, key):
+        valid = not any([k == key for k in self.invalid_keys])
+        return (" " not in key) and valid
+
+    def __repr__(self):
+        return repr(self._dict)
+
+    def __str__(self):
+        return str(self._dict)
+
+    def items(self):
+        return self._dict.items()

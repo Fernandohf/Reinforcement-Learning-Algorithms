@@ -4,7 +4,9 @@ import numpy as np
 import pytest
 
 from ..utils.configuration import (BisTrainConfiguration,
-                                   NoActiveSectionException, ValidationError)
+                                   LocalConfig,
+                                   ValidationError,
+                                   InvalidKey)
 from ..utils.noise import GaussianNoise, OUNoise
 
 LOCAL_FOLDER = os.path.dirname(__file__)
@@ -29,68 +31,85 @@ class TestBisTrainConfiguration():
 
     def test_invalid_key(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        a.activate_sections("AGENT")
         with pytest.raises(KeyError):
-            a.abc
-
-    def test_activation(self):
-
-        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        with pytest.raises(NoActiveSectionException):
-            a.critic_hidden_size
+            a["abc"]
 
     def test_dict_access1(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        assert a["AGENT"]["ACTION_SIZE"] == 2
+        assert a["GLOBAL"]["ACTION_SIZE"] == 2
 
     def test_dict_access2(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        assert a["EXPLORATION"]["SIZE"] == 2
+        assert a["GLOBAL"]["SEED"] == 42
 
-    def test_dict_attr_access(self):
+    def test_dict_access3(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        a.activate_sections("AGENT")
-        assert a.CRITIC["HIDDEN_SIZE"] == [256, 128]
+        assert a["A2C"]["CRITIC"]["HIDDEN_SIZE"] == [256, 128]
 
-    def test_attribute_access1(self):
+    def test_dict_access4(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        a.activate_sections("AGENT")
-        assert a.ACTION_SIZE == 2
+        assert a["ACTION_SIZE"] == 2
 
-    def test_attribute_access2(self):
+    def test_dict_access5(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        a.activate_sections("TRAINING")
-        assert a.DEVICE == 'cuda'
+        assert a["A2C"]["TRAINING"]["GAMMA"] == 0.99
 
-    def test_attribute_access3(self):
+    def test_dict_access6(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        a.activate_sections(["AGENT", "ACTOR"])
-        assert a.STATE_SIZE == 24
+        assert a["STATE_SIZE"] == 24
 
-    def test_attribute_access4(self):
-        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        a.activate_sections(["AGENT", "ACTOR"])
-        assert a.HIDDEN_SIZE == [256, 32]
+    def test_default_key(self):
+        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC,
+                                  default_key="EXPLORATION")
+        assert a["TYPE"] == 'gaussian'
 
-    def test_attribute_access5(self):
+    def test_dict_copy(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        a.activate_sections("AGENT")
-        a.activate_subsection("CRITIC")
-        assert a.HIDDEN_SIZE == [256, 128]
+        b = a.dict_copy()
+        b["GLOBAL"] = 1
+        assert a["GLOBAL"] != b["GLOBAL"]
 
-    def test_attribute_access6(self):
-        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        a.activate_sections("AGENT")
-        a.activate_subsection("CRITIC")
-        assert a.STATE_SIZE == 24
 
-    def test_attribute_access7(self):
+class TestLocalConfig():
+    """
+    Testing local config class
+    """
+    def test_initiation(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        a.activate_sections("AGENT")
-        a.activate_subsection("CRITIC")
-        a.deactivate_subsection()
-        with pytest.raises(KeyError):
-            a.HIDDEN_SIZE
+        assert LocalConfig(a)
+
+    def test_attr_access1(self):
+        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
+        b = LocalConfig(a["EXPLORATION"])
+        assert b.TYPE == 'gaussian'
+
+    def test_attr_access2(self):
+        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
+        b = LocalConfig(a["A2C"])
+        assert b.ACTOR.LR == 0.001
+
+    def test_attr_access3(self):
+        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
+        b = LocalConfig(a["A2C"])
+        assert b.SEED == 42
+
+    def test_attr_access4(self):
+        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
+        b = LocalConfig(a["A2C"])
+        c = LocalConfig(b.CRITIC)
+        assert c.OPTIMIZER == 'adam'
+
+    def test_invalidkey1(self):
+        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
+        a["A2C"]["a b c"] = 4
+        with pytest.raises(InvalidKey):
+            LocalConfig(a["A2C"])
+
+    def test_invalidkey2(self):
+        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
+        a["A2C"]["items"] = 4
+        with pytest.raises(InvalidKey):
+            LocalConfig(a["A2C"])
 
 
 class TestGaussianNoise():
@@ -100,14 +119,13 @@ class TestGaussianNoise():
     @staticmethod
     def _create_noise():
         c = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        c["EXPLORATION"]["SIZE"] = 1
-        c.activate_sections("EXPLORATION")
-        n = GaussianNoise(c)
+        c["GLOBAL"]["ACTION_SIZE"] = 1
+        n = GaussianNoise(c["EXPLORATION"])
         return n
 
     def test_reset(self):
         n = self._create_noise()
-        samples = [n.sample() for i in range(100)]
+        _ = [n.sample() for i in range(100)]
         n.reset()
         assert n._eps_step == 0
 
@@ -124,14 +142,13 @@ class TestOUNoise():
     @staticmethod
     def _create_noise():
         c = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        c["EXPLORATION"]["SIZE"] = 1
+        c["GLOBAL"]["ACTION_SIZE"] = 1
         c["EXPLORATION"]["TYPE"] = 'ou'
-        c.activate_sections("EXPLORATION")
-        n = OUNoise(c)
+        n = OUNoise(c["EXPLORATION"])
         return n
 
     def test_reset(self):
         n = self._create_noise()
-        samples = [n.sample() for i in range(100)]
+        _ = [n.sample() for i in range(100)]
         n.reset()
         assert n.state == n.config.MEAN
