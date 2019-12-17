@@ -70,14 +70,17 @@ class BisTrainConfiguration(ConfigObj):
             logging.error("File validation failed!")
             raise ValidationError(self.validation)
 
+        # Add default values
         self._default_key = default_key
 
     def __getitem__(self, key):
-        try:
+        if key in self.keys():
             return super().__getitem__(key)
-        except KeyError:
+        elif key in self[self._default_key].keys():
             # Search on default key
-            return self[self._default_key].__getitem__(key)
+            return self[self._default_key][key]
+        else:
+            raise KeyError
 
     def dict_copy(self):
         _copy = deepcopy(self)
@@ -106,18 +109,14 @@ class LocalConfig():
         except AttributeError:
             self._dict = section
 
-        print(self)
-        print(self.__dir__())
         # Populates key values as attibutes
         for k, v in self._dict.items():
             if isinstance(v, dict):
                 v = LocalConfig(v)
             if self._valid_key(k):
-                print("aaa")
                 self.__setattr__(k, v)
             else:
                 raise InvalidKey()
-        print(self.__dir__())
 
     def _valid_key(self, key):
         return " " not in key
@@ -127,3 +126,6 @@ class LocalConfig():
 
     def __str__(self):
         return str(self._dict)
+
+    def items(self):
+        return self._dict.items()
