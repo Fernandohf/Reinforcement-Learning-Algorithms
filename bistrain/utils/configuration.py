@@ -87,13 +87,23 @@ class BisTrainConfiguration(ConfigObj):
             # Search on default key
             return self[self._default_key].__getitem__(key)
 
+    def deepcopy(self):
+        _copy = deepcopy(self)
+        del _copy[self._default_key]
+        # Add default values
+        for k, v in self[self._default_key].values():
+            _copy[k] = v
+
+        return _copy
+
 
 class LocalConfig():
     """
     Local configuration class with attribute accessors.
     """
+
     def __init__(self, _dict):
-        self._dict = deepcopy(_dict)
+        self._dict = _dict.deepcopy()
         # Populates key values as attibutes
         for k, v in _dict.items():
             if isinstance(v, dict):
