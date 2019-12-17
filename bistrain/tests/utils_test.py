@@ -93,6 +93,18 @@ class TestLocalConfig():
         b = LocalConfig(a["A2C"])
         assert b.SEED == 42
 
+    def test_attr_access4(self):
+        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
+        b = LocalConfig(a["A2C"])
+        c = LocalConfig(b.CRITIC)
+        assert c.OPTIMIZER == 'adam'
+
+    def test_invalidkey(self):
+        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
+        a["A2C"]["a b c"] = 4
+        with pytest.raises(InvalidKey):
+            LocalConfig(a["A2C"])
+
 
 class TestGaussianNoise():
     """
