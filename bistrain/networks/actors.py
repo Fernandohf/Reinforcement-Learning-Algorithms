@@ -54,8 +54,9 @@ class FCActorDiscrete(nn.Module):
 
         # Distribution
         dist = Categorical(logits=logits)
-
-        return dist.sample().view(-1, 1)
+        sample = dist.rsample().view(-1, 1)
+        log_probs = dist.log_prob(sample)
+        return sample, log_probs
 
 
 class FCActorContinuous(nn.Module):
@@ -118,9 +119,11 @@ class FCActorContinuous(nn.Module):
             x = self.hidden_activation(layer(x))
 
         # Distribution
-        loc = self.output_loc_activation(self.layers[-2](x)) * self.output_loc_scaler
+        loc = (self.output_loc_activation(self.layers[-2](x)) *
+               self.output_loc_scaler)
         scale = self.output_scale_activation(self.layers[-1](x))
 
-        # Batch size
         dist = Normal(loc=loc, scale=scale)
-        return self.saturation(dist.sample())
+        sample = dist.rsample()
+        log_probs = dist.log_prob(sample)
+        return self.saturation(sample), log_probs
