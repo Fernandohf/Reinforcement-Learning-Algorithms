@@ -51,14 +51,6 @@ class ValidationError(ValueError):
         return msg
 
 
-class MissingOptionError(KeyError):
-    """
-    Exception classes for missing mandatory configuration
-    """
-    def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
-
-
 # Main configuration class
 class BisTrainConfiguration(ConfigObj):
     """
@@ -87,11 +79,11 @@ class BisTrainConfiguration(ConfigObj):
             # Search on default key
             return self[self._default_key].__getitem__(key)
 
-    def deepcopy(self):
+    def dict_copy(self):
         _copy = deepcopy(self)
         del _copy[self._default_key]
         # Add default values
-        for k, v in self[self._default_key].values():
+        for k, v in self[self._default_key].items():
             _copy[k] = v
 
         return _copy
@@ -102,13 +94,36 @@ class LocalConfig():
     Local configuration class with attribute accessors.
     """
 
-    def __init__(self, _dict):
-        self._dict = _dict.deepcopy()
+    def __init__(self, section):
+        try:
+            # If section
+            self._dict = section.dict()
+            # Navigate upwards to add defaults
+            while section.parent is not section:
+                section = section.parent
+            for k, v in section[section._default_key].items():
+                self._dict[k] = v
+        except AttributeError:
+            self._dict = section
+
+        print(self)
+        print(self.__dir__())
         # Populates key values as attibutes
-        for k, v in _dict.items():
+        for k, v in self._dict.items():
             if isinstance(v, dict):
                 v = LocalConfig(v)
-                if " " not in k:
-                    self.__setattr__(k, v)
-                else:
-                    raise InvalidKey()
+            if self._valid_key(k):
+                print("aaa")
+                self.__setattr__(k, v)
+            else:
+                raise InvalidKey()
+        print(self.__dir__())
+
+    def _valid_key(self, key):
+        return " " not in key
+
+    def __repr__(self):
+        return repr(self._dict)
+
+    def __str__(self):
+        return str(self._dict)

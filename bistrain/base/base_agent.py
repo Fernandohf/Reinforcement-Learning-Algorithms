@@ -15,16 +15,26 @@ class BaseAgent(ABC):
     """
     Base agent class
     """
-
-    def __init__(self, config_file):
+    def __init__(self, config):
         # Load configuration
-        self.config = BisTrainConfiguration(config_file)
-        agent = self.config["GLOBAL"]["AGENT"].upper()
-        self.config.activate_sections(agent.upper())
+        if isinstance(config, str):
+            config = BisTrainConfiguration(config)
+        elif isinstance(config, BisTrainConfiguration):
+            config = config
+        else:
+            raise ValueError("Configuration file is invalid!")
+
+        # Extract agent parameters
+        agent = config["GLOBAL"]["AGENT"].upper()
+        self.con
+
+        # Parameters
+        self.optimizer
+
         super().__init__()
 
     def _set_optimizer(self, parameters):
-        if self.config.OPTIMIZER == 'sgd':
+        if config.OPTIMIZER == 'sgd':
             optimizer = SGD(parameters, lr=self.config.LR,
                             momentum=self.config.MOMENTUM)
         elif self.config.OPTIMIZER == 'adamw':

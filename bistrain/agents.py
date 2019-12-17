@@ -226,8 +226,8 @@ class DDPGAgent():
             action_size (int): dimension of each action
             random_seed (int): random seed
         """
-        self.config.state_size = state_size
-        self.self.config.action_size = self.config.action_size
+        self.state_size = state_size
+        self.action_size = self.config.action_size
         self.seed = random.seed(random_seed)
 
         # Actor Network (w/ Target Network)

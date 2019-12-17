@@ -4,9 +4,9 @@ import numpy as np
 import pytest
 
 from ..utils.configuration import (BisTrainConfiguration,
-                                   NoActiveSectionException,
+                                   LocalConfig,
                                    ValidationError,
-                                   MissingOptionError)
+                                   InvalidKey)
 from ..utils.noise import GaussianNoise, OUNoise
 
 LOCAL_FOLDER = os.path.dirname(__file__)
@@ -31,14 +31,8 @@ class TestBisTrainConfiguration():
 
     def test_invalid_key(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        a.activate_sections("A2C")
-        with pytest.raises(MissingOptionError):
-            a.abc
-
-    def test_activation(self):
-        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        with pytest.raises(NoActiveSectionException):
-            a.critic_hidden_size
+        with pytest.raises(KeyError):
+            a["abc"]
 
     def test_dict_access1(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
@@ -48,56 +42,56 @@ class TestBisTrainConfiguration():
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
         assert a["GLOBAL"]["SEED"] == 42
 
-    def test_dict_attr_access(self):
+    def test_dict_access3(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        a.activate_sections("A2C")
-        assert a.CRITIC["HIDDEN_SIZE"] == [256, 128]
+        assert a["A2C"]["CRITIC"]["HIDDEN_SIZE"] == [256, 128]
 
-    def test_attribute_access1(self):
+    def test_dict_access4(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        a.activate_sections("GLOBAL")
-        assert a.ACTION_SIZE == 2
+        assert a["ACTION_SIZE"] == 2
 
-    def test_attribute_access2(self):
+    def test_dict_access5(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        a.activate_sections(["A2C", "TRAINING"])
-        assert a.DEVICE == 'cpu'
+        assert a["A2C"]["TRAINING"]["GAMMA"] == 0.99
 
-    def test_attribute_access3(self):
+    def test_dict_access6(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        a.activate_sections(["A2C", "ACTOR"])
-        assert a.STATE_SIZE == 24
-
-    def test_attribute_access4(self):
-        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        a.activate_sections(["A2C", "ACTOR"])
-        assert a.HIDDEN_SIZE == [256, 32]
-
-    def test_attribute_access5(self):
-        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        a.activate_sections("A2C")
-        a.activate_subsection("CRITIC")
-        assert a.HIDDEN_SIZE == [256, 128]
-
-    def test_attribute_access6(self):
-        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        a.activate_sections("A2C")
-        a.activate_subsection("CRITIC")
-        assert a.STATE_SIZE == 24
-
-    def test_attribute_access7(self):
-        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        a.activate_sections("A2C")
-        a.activate_subsection("CRITIC")
-        a.deactivate_subsection()
-        with pytest.raises(MissingOptionError):
-            a.HIDDEN_SIZE
+        assert a["STATE_SIZE"] == 24
 
     def test_default_key(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC,
-                                  default_key="A2C")
-        a.activate_sections("GLOBAL")
-        assert isinstance(a.ACTOR, dict)
+                                  default_key="EXPLORATION")
+        assert a["TYPE"] == 'gaussian'
+
+    def test_dict_copy(self):
+        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
+        b = a.dict_copy()
+        b["GLOBAL"] = 1
+        assert a["GLOBAL"] != b["GLOBAL"]
+
+
+class TestLocalConfig():
+    """
+    Testing local config class
+    """
+    def test_initiation(self):
+        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
+        assert LocalConfig(a)
+
+    def test_attr_access1(self):
+        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
+        b = LocalConfig(a["EXPLORATION"])
+        assert b.TYPE == 'gaussian'
+
+    def test_attr_access2(self):
+        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
+        b = LocalConfig(a["A2C"])
+        assert b.ACTOR.LR == 0.001
+
+    def test_attr_access3(self):
+        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
+        b = LocalConfig(a["A2C"])
+        assert b.SEED == 42
 
 
 class TestGaussianNoise():
@@ -108,8 +102,7 @@ class TestGaussianNoise():
     def _create_noise():
         c = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
         c["GLOBAL"]["ACTION_SIZE"] = 1
-        c.activate_sections("EXPLORATION")
-        n = GaussianNoise(c)
+        n = GaussianNoise(c["EXPLORATION"])
         return n
 
     def test_reset(self):
@@ -133,8 +126,7 @@ class TestOUNoise():
         c = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
         c["GLOBAL"]["ACTION_SIZE"] = 1
         c["EXPLORATION"]["TYPE"] = 'ou'
-        c.activate_sections("EXPLORATION")
-        n = OUNoise(c)
+        n = OUNoise(c["EXPLORATION"])
         return n
 
     def test_reset(self):
