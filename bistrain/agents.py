@@ -129,7 +129,7 @@ class A2CAgent(BaseAgent):
 
     def _learn(self, states, actions, rewards, next_states, dones, gamma):
         """
-        Update policy and value parameters using given batch ofcriticritic_configes.
+        Update policy and value parameters using given batch of expericences.
 
         Parameters
         ----------
