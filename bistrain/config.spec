@@ -84,13 +84,13 @@ STATE_SIZE = integer(min=1)                                       # State dimens
   LAMBDA = float(min=0, max=1, default=0.05)                      #
 
 
-[EXPLORATION]                                                     #
-TYPE = option("gaussian", "ou", "e-greedy", default="gaussian")   #
-EPS_BETA = float(min=0, default=0.1)                              #
-EPS_MIN = float(min=0, default=0.01)                              #
-MEAN = float(default=0)                                           #
-SIGMA = float(min=0, default=0.05)                                #
-THETA = float(min=0, default=0.05)                                #
+  [[EXPLORATION]]                                                 #
+  TYPE = option("gaussian", "ou", "e-greedy", default="gaussian") #
+  EPS_BETA = float(min=0, default=0.1)                            #
+  EPS_MIN = float(min=0, default=0.01)                            #
+  MEAN = float(default=0)                                         #
+  SIGMA = float(min=0, default=0.05)                              #
+  THETA = float(min=0, default=0.05)                              #
 
 
 [TRAINER]
