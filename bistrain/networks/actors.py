@@ -97,7 +97,8 @@ class FCActorContinuous(nn.Module):
             self.layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
             # duplicate last layer
             if i == len(layers_sizes) - 2:
-                self.layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
+                self.layers.append(nn.Linear(layers_sizes[i],
+                                   layers_sizes[i + 1]))
 
         # Activation hidden
         self.hidden_activation = getattr(torch, hidden_activation)
