@@ -25,11 +25,11 @@ class GaussianNoise(BaseNoise):
         # Base class initialization
         super().__init__(config)
         # Parameters
-        self.eps_beta = self.config["EXPLORATION"]["EPS_BETA"]
-        self.mean = self.config["EXPLORATION"]["MEAN"]
-        self.std = self.config["EXPLORATION"]["SIGMA"]
-        self.size = self.config["GLOBAL"]["ACTION_SIZE"]
-        self.eps_min = self.config["EXPLORATION"]["EPS_MIN"]
+        self.eps_beta = self.config.EPS_BETA
+        self.mean = self.config.MEAN
+        self.std = self.config.SIGMA
+        self.size = self.config.ACTION_SIZE
+        self.eps_min = self.config.EPS_MIN
         self.reset()
 
     def reset(self):

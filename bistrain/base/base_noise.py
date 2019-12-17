@@ -2,6 +2,7 @@
 Base noise class
 """
 from abc import ABC, abstractmethod
+from ..utils.configuration import LocalConfig
 
 
 class BaseNoise(ABC):
@@ -10,7 +11,7 @@ class BaseNoise(ABC):
     """
 
     def __init__(self, config):
-        self.config = config
+        self.config = LocalConfig(config)
         super().__init__()
 
     @abstractmethod

@@ -7,16 +7,7 @@ import torch.optim as optim
 from torch.nn.utils import clip_grad_norm_
 
 from .base.base_agent import BaseAgent
-from .networks.actors import FCActorContinuous
-from .networks.critics import FCCritic
 from .utils.bootstrap import n_step_boostrap
-
-# In case of being imported on notebook
-try:
-    get_ipython
-    from tqdm import tqdm_notebook as tqdm
-except NameError:
-    from tqdm import tqdm
 
 
 class A2CAgent(BaseAgent):
@@ -24,32 +15,26 @@ class A2CAgent(BaseAgent):
     Advantage Actor Critic (A2C) Agent
     """
 
-    def __init__(self, config_file):
+    def __init__(self, config_file, noise):
         """
         Initialize an Advantage Actor Critic (A2C) Agent object.
 
         Parameters
         ----------
-        config_file: str
-            Path to configuration file
+        config_file: str, LocalConfig or BisTrainConfiguration
+            Path to configuration file or configuration object
         """
         # Base class
         super().__init__(config_file)
 
         # Actor Network
-        self.config.activate_subsection("ACTOR")
         self.actor = self._set_policy()
-        self.actor_optimizer = self._set_optimizer(self.actor.parameters())
-        self.config.deactivate_subsection()
 
         # Critic Network
-        self.config.activate_subsection("CRITIC")
         self.critic = self._set_val_func()
-        self.critic_optimizer = self._set_optimizer(self.critic.parameters())
-        self.config.deactivate_subsection()
 
         # Noise process
-        self.noise = self._set_noise()
+        self.noise = noise
 
         # Reset current status
         self.reset()
@@ -99,13 +84,9 @@ class A2CAgent(BaseAgent):
         """
         Reset the current learning episode
         """
-        # Activate training section
-        self.config.activate_subsection("TRAINING")
-
         # Noise scalling
         self.noise.reset()
-        # Episode parameters
-        self._gamma = self.config.GAMMA
+        # Episode parameter
         self._initial_states = None
 
     def step(self, envs):
@@ -122,15 +103,19 @@ class A2CAgent(BaseAgent):
         done: bool
             Return wether the episode is done or not
         scores: array
-            Rewards for each parallel environment
+            Rewardsactor_configach parallel environment
         """
-        # If first step
+        # To facilitate access
+        config = self.config.TRAINING
+
+        # First step
         if self._initial_states is None:
             self._initial_states = envs.reset()
+            self._gamma = config.GAMMA
         # Unroll trajectories of parallel envs
         s, a, r, sp, dones = n_step_boostrap(envs, self,
                                              self._initial_states,
-                                             n_step=self.config.N_STEP_BS)
+                                             n_step=config.N_STEP_BS)
         self._learn(s, a, r, sp, dones, self._gamma)
         # Start from the next state
         self._initial_states = sp[:, 0, :]
@@ -138,13 +123,13 @@ class A2CAgent(BaseAgent):
         scores = r[:, 0]
         done = dones[:, -1].any()
         # Update initial gamma
-        self._gamma *= self.config.GAMMA
+        self._gamma *= config.GAMMA
 
         return scores, done
 
     def _learn(self, states, actions, rewards, next_states, dones, gamma):
         """
-        Update policy and value parameters using given batch of trajectories.
+        Update policy and value parameters using given batch of expericences.
 
         Parameters
         ----------
@@ -161,6 +146,7 @@ class A2CAgent(BaseAgent):
         gamma: float
             Current discount factor
         """
+
         # Check consistency
         assert(np.array_equal(states[0, 1, :], next_states[0, 0, :]))
 
@@ -198,14 +184,14 @@ class A2CAgent(BaseAgent):
         critic_loss = F.mse_loss(Q_expected, Q_target)
 
         # Minimize the loss
-        self.critic_optimizer.zero_grad()
+        self.critic.optimizer.zero_grad()
         critic_loss.backward()
 
         # Gradient clipping
-        if self.config.GRADIENT_CLIP != 0:
+        if self.config.TRAINING.GRADIENT_CLIP != 0:
             clip_grad_norm_(self.critic.parameters(),
-                            self.config.GRADIENT_CLIP)
-        self.critic_optimizer.step()
+                            self.config.TRAINING.GRADIENT_CLIP)
+        self.critic.optimizer.step()
 
         # ----------------------- Update Actor ----------------------- #
         # Compute advantage - actor loss
@@ -213,78 +199,14 @@ class A2CAgent(BaseAgent):
         advantages = (Q_target.detach() - Q_expected.detach())
         actor_loss = -(log_action * advantages).mean()
         # Minimize loss
-        self.actor_optimizer.zero_grad()
+        self.actor.optimizer.zero_grad()
         actor_loss.backward()
 
         # Gradient clipping
-        if self.config.GRADIENT_CLIP != 0:
+        if self.config.TRAINING.GRADIENT_CLIP != 0:
             clip_grad_norm_(self.critic.parameters(),
-                            self.config.GRADIENT_CLIP)
-        self.actor_optimizer.step()
-
-
-def train_a2c(mp_envs, agent, episodes=2000, n_step=5, print_every=10, max_steps=300):
-    """
-    Train the given agent on the parallel environments provided.
-
-    Parameters
-    ----------
-    mp_envs: SubprocVecEnv
-        Parallels environments
-    agent: Agent
-        Agent exploring the environments
-    episodes: int
-        Number of episodes to train
-    print_every: int
-        Frequency to display training metrics
-    max_steps: int
-        Maximum number of steps
-    """
-    # Saving metrics
-    avg_scores_deque = deque(maxlen=print_every)
-    avg_scores = []
-    scores_envs = []
-    # Keep track of progress
-    pbar = tqdm(range(1, episodes + 1), ncols=800)
-    for i_episode in pbar:
-        # Reset env
-        initial_states = mp_envs.reset()
-        # Reset agent noise (exploration)
-        agent.reset()
-        score = []
-        gamma = GAMMA
-        for i in range(max_steps):
-            # Collect trajectories
-            S, A, R, Sp, dones = n_step_boostrap(mp_envs, agent,
-                                                 initial_states,
-                                                 n_step)
-            agent.learn(S, A, R, Sp, dones, gamma)
-            # Start from the next state
-            initial_states = Sp[:, 0, :]
-            # Collect scores from all parallel envs
-            score.append(R[:, 0])
-            # Update initial gamma
-            gamma *= GAMMA
-            if dones[:, -1].any():
-                break
-        # Save scores
-        episode_score = np.asarray(score).sum(axis=0)
-        mean_score = episode_score.mean()
-        avg_scores_deque.append(mean_score)
-        avg_scores.append(mean_score)
-        scores_envs.append(episode_score)
-        # Display some progress
-        if (i_episode) % print_every == 0:
-            text = '\rEpisode {}/{}\tAverage Scores: {:.2f}'.format(i_episode,
-                                                                    episodes,
-                                                                    np.mean(avg_scores_deque))
-            pbar.set_description(text)
-
-        # Solve environment
-        # if mean(avg_scores_deque) >=
-
-    return np.asarray(scores_envs)
-
+                            self.config.TRAINING.GRADIENT_CLIP)
+        self.actor.optimizer.step()
 
 
 class DDPGAgent():
@@ -299,8 +221,8 @@ class DDPGAgent():
             action_size (int): dimension of each action
             random_seed (int): random seed
         """
-        self.config.state_size = state_size
-        self.self.config.action_size = self.config.action_size
+        self.state_size = state_size
+        self.action_size = self.config.action_size
         self.seed = random.seed(random_seed)
 
         # Actor Network (w/ Target Network)
@@ -308,9 +230,9 @@ class DDPGAgent():
             state_size, action_size, random_seed).to(device)
         self.actor_target = Actor(
             state_size, self.config.action_size, random_seed).to(device)
-        self.actor_optimizer = optim.Adam(self.actor_local.parameters(),
+        self.actor.optimizer = optim.Adam(self.actor_local.parameters(),
                                           lr=LR_ACTOR)
-        # self.actor_lr_scheduler = StepLR(self.actor_optimizer,
+        # self.actor_lr_scheduler = StepLR(self.actor.optimizer,
         #                                  step_size=LR_STEP_SIZE,
         #                                  gamma=LR_GAMMA)
 
@@ -319,10 +241,10 @@ class DDPGAgent():
             state_size, self.config.action_size, random_seed).to(device)
         self.critic_target = Critic(
             state_size, self.config.action_size, random_seed).to(device)
-        self.critic_optimizer = optim.Adam(self.critic_local.parameters(),
+        self.critic.optimizer = optim.Adam(self.critic_local.parameters(),
                                            lr=LR_CRITIC,
                                            weight_decay=WEIGHT_DECAY)
-        # self.critic_lr_scheduler = StepLR(self.critic_optimizer,
+        # self.critic_lr_scheduler = StepLR(self.critic.optimizer,
         #                                   step_size=LR_STEP_SIZE,
         #                                   gamma=LR_GAMMA)
 
@@ -372,12 +294,12 @@ class DDPGAgent():
         Q_expected = self.critic_local(states, actions)
         critic_loss = F.mse_loss(Q_expected, Q_targets)
         # Minimize the loss
-        self.critic_optimizer.zero_grad()
+        self.critic.optimizer.zero_grad()
         critic_loss.backward()
         # Clip gradients
         torch.nn.utils.clip_grad_norm_(
             self.critic_local.parameters(), GRADIENT_CLIP_VALUE)
-        self.critic_optimizer.step()
+        self.critic.optimizer.step()
         # self.critic_lr_scheduler.step()
 
         # ---------------------------- update actor ---------------------------- #
@@ -385,10 +307,10 @@ class DDPGAgent():
         actions_pred = self.actor_local(states)
         actor_loss = -self.critic_local(states, actions_pred).mean()
         # Minimize the loss
-        self.actor_optimizer.zero_grad()
+        self.actor.optimizer.zero_grad()
         actor_loss.backward()
         # torch.nn.utils.clip_grad_norm_(self.actor_local.parameters(), GRADIENT_CLIP_VALUE)
-        self.actor_optimizer.step()
+        self.actor.optimizer.step()
         # self.actor_lr_scheduler.step()
 
         # ----------------------- update target networks ----------------------- #
