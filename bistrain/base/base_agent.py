@@ -43,7 +43,16 @@ class BaseAgent(ABC):
     #         noise = GaussianNoise(config)
     #     return noise
 
-    def _set_policy(self):
+    def _set_policy(self, optimizer=True):
+        """
+        Creates the network defined in the [ACTOR] subsection
+        of the configuration file.
+
+        Parameters
+        ----------
+        opmizer: bool
+            Wether define the optimizer or not
+        """
         actor_config = self.config.ACTOR
         # FC architecture
         if actor_config.ARCHITECTURE == 'fc':
@@ -69,13 +78,23 @@ class BaseAgent(ABC):
         # Move to device
         policy = policy.to(self.config.DEVICE)
         # Add optimizer
-        policy.__setattr__("optimizer",
-                           self._set_optimizer(policy.parameters(),
-                                               actor_config))
+        if optimizer:
+            policy.__setattr__("optimizer",
+                               self._set_optimizer(policy.parameters(),
+                                                   actor_config))
 
         return policy
 
-    def _set_val_func(self):
+    def _set_val_func(self, optimizer=True):
+        """
+        Creates the network defined in the [CRITIC] subsection
+        of the configuration file.
+
+        Parameters
+        ----------
+        opmizer: bool
+            Wether define the optimizer or not
+        """
         critic_config = self.config.CRITIC
         if critic_config.ARCHITECTURE == 'fc':
             val_func = FCCritic(self.config.STATE_SIZE,
@@ -90,9 +109,10 @@ class BaseAgent(ABC):
         # Move to device and return
         val_func = val_func.to(self.config.DEVICE)
         # Add optimizer
-        val_func.__setattr__("optimizer",
-                             self._set_optimizer(val_func.parameters(),
-                                                 critic_config))
+        if optimizer:
+            val_func.__setattr__("optimizer",
+                                 self._set_optimizer(val_func.parameters(),
+                                                     critic_config))
 
         return val_func
 
