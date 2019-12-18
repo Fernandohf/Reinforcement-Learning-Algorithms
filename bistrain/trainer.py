@@ -1,9 +1,35 @@
+import random
+
+import numpy as np
+import torch
+import torch.nn.functional as F
+import torch.optim as optim
+
+from .base.base_agent import BaseAgent
+from .networks.actors import FCActorContinuous
+from .networks.critics import FCCritic
+from .utils.bootstrap import n_step_boostrap
 # In case of being imported on notebook
 try:
     get_ipython
     from tqdm import tqdm_notebook as tqdm
 except NameError:
     from tqdm import tqdm
+
+
+class Trainer():
+    """
+    Common trainer for all agents.
+    """
+    def __init__(self, config):
+        super().__init__()
+        self.config =
+
+    def run():
+        """
+        Run the trainer
+        """
+
 
 
 def train_a2c(mp_envs, agent, episodes=2000, n_step=5, print_every=10, max_steps=300):

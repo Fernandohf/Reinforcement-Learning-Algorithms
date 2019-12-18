@@ -22,19 +22,19 @@ class TestFCActorContinuous():
     def test_output1(self):
         a = FCActorContinuous(4, 2)
         s = torch.Tensor([[1, 2, 3, 4]])
-        out = a(s)
+        out, _ = a(s)
         assert out.shape == (1, 2)
 
     def test_output2(self):
         a = FCActorContinuous(2, 16)
         s = torch.Tensor([[1, 2], [1, 2], [3, 4]])
-        out = a(s)
+        out, _ = a(s)
         assert out.shape == (3, 16)
 
     def test_output3(self):
         a = FCActorContinuous(4, 2, output_loc_scaler=1)
         s = torch.Tensor([[1, 2, 3, 4]])
-        out = a(s)
+        out, _ = a(s)
         assert out.abs().max() <= 1
 
     def test_output4(self):
@@ -43,7 +43,7 @@ class TestFCActorContinuous():
                               output_loc_scaler=1,
                               output_range=(0, 1))
         s = torch.Tensor([[1, 2, 3, 4]])
-        out = a(s)
+        out, _ = a(s)
         assert (all(out.view(-1) <= 1) and all(out.view(-1) >= 0))
 
     def test_output5(self):
@@ -52,7 +52,7 @@ class TestFCActorContinuous():
                               output_loc_scaler=5,
                               output_range=(-5, 5))
         s = torch.Tensor([[1, 2, 3, 4]])
-        out = a(s)
+        out, _ = a(s)
         assert (all(out.view(-1) <= 5) and all(out.view(-1) >= -5))
 
 
@@ -75,25 +75,25 @@ class TestFCActorDiscrete():
     def test_output1(self):
         a = FCActorDiscrete(4, 2)
         s = torch.Tensor([[1, 2, 3, 4]])
-        out = a(s)
+        out, _ = a(s)
         assert out.shape == (1, 1)
 
     def test_output2(self):
         a = FCActorDiscrete(2, 1)
         s = torch.Tensor([[1, 2], [1, 2], [3, 4]])
-        out = a(s)
+        out, _ = a(s)
         assert out.shape == (3, 1)
 
     def test_output3(self):
         a = FCActorDiscrete(4, 5)
         s = torch.Tensor([[1, 2, 3, 4]])
-        out = a(s)
+        out, _ = a(s)
         assert all(out.view(-1) <= 4) and all(out.view(-1) >= 0)
 
     def test_output4(self):
         a = FCActorDiscrete(4, 2)
         s = torch.Tensor([[1, 2, 3, 4]])
-        out = a(s)
+        out, _ = a(s)
         assert all(out.view(-1) <= 1) and all(out.view(-1) >= 0)
 
 

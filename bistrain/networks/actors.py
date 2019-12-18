@@ -53,8 +53,9 @@ class FCActorDiscrete(nn.Module):
         logits = self.layers[-1](x)
 
         # Distribution
+        bs = state.shape[0]
         dist = Categorical(logits=logits)
-        sample = dist.rsample().view(-1, 1)
+        sample = dist.sample().view(bs, -1)
         log_probs = dist.log_prob(sample)
         return sample, log_probs
 
