@@ -3,7 +3,9 @@ Base agent class
 """
 from abc import ABC, abstractmethod
 
+import torch
 from torch.optim import SGD, Adam, AdamW
+import numpy as np
 
 from ..utils.configuration import BisTrainConfiguration, LocalConfig
 from ..networks.actors import FCActorDiscrete, FCActorContinuous
@@ -128,6 +130,21 @@ class BaseAgent(ABC):
             optimizer = Adam(parameters, lr=config.LR,
                              weight_decay=config.WEIGHT_DECAY)
         return optimizer
+
+    def _add_noise(self, action):
+        """
+        Modify the action with noise
+        """
+        # Continuous actions
+        if self.config.ACTION_SPACE == "continuous":
+            action += self.noise.sample()
+            # Clipped action
+            action = np.clip(action,
+                             *self.config.ACTION_RANGE)
+        # Discrete Actions
+        elif self.config.ACTION_SPACE == "discrete":
+            action = self.noise.sample(action)
+        return action
 
     @abstractmethod
     def step(self):
