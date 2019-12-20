@@ -58,7 +58,6 @@ def make_multi_envs(n_envs, env_name, seed):
     return mp_envs
 
 
-# Collect n_step bootstrap
 def n_step_boostrap(envs, agent, previous_states, n_bootstrap=5):
     """
     Perform n_step bootstrap on the list of parallel environments.
