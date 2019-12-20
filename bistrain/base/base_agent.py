@@ -3,7 +3,9 @@ Base agent class
 """
 from abc import ABC, abstractmethod
 
+import torch
 from torch.optim import SGD, Adam, AdamW
+import numpy as np
 
 from ..utils.configuration import BisTrainConfiguration, LocalConfig
 from ..networks.actors import FCActorDiscrete, FCActorContinuous
@@ -43,7 +45,16 @@ class BaseAgent(ABC):
     #         noise = GaussianNoise(config)
     #     return noise
 
-    def _set_policy(self):
+    def _set_policy(self, optimizer=True):
+        """
+        Creates the network defined in the [ACTOR] subsection
+        of the configuration file.
+
+        Parameters
+        ----------
+        opmizer: bool
+            Wether define the optimizer or not
+        """
         actor_config = self.config.ACTOR
         # FC architecture
         if actor_config.ARCHITECTURE == 'fc':
@@ -69,13 +80,23 @@ class BaseAgent(ABC):
         # Move to device
         policy = policy.to(self.config.DEVICE)
         # Add optimizer
-        policy.__setattr__("optimizer",
-                           self._set_optimizer(policy.parameters(),
-                                               actor_config))
+        if optimizer:
+            policy.__setattr__("optimizer",
+                               self._set_optimizer(policy.parameters(),
+                                                   actor_config))
 
         return policy
 
-    def _set_val_func(self):
+    def _set_val_func(self, optimizer=True):
+        """
+        Creates the network defined in the [CRITIC] subsection
+        of the configuration file.
+
+        Parameters
+        ----------
+        opmizer: bool
+            Wether define the optimizer or not
+        """
         critic_config = self.config.CRITIC
         if critic_config.ARCHITECTURE == 'fc':
             val_func = FCCritic(self.config.STATE_SIZE,
@@ -90,9 +111,10 @@ class BaseAgent(ABC):
         # Move to device and return
         val_func = val_func.to(self.config.DEVICE)
         # Add optimizer
-        val_func.__setattr__("optimizer",
-                             self._set_optimizer(val_func.parameters(),
-                                                 critic_config))
+        if optimizer:
+            val_func.__setattr__("optimizer",
+                                 self._set_optimizer(val_func.parameters(),
+                                                     critic_config))
 
         return val_func
 
@@ -108,6 +130,21 @@ class BaseAgent(ABC):
             optimizer = Adam(parameters, lr=config.LR,
                              weight_decay=config.WEIGHT_DECAY)
         return optimizer
+
+    def _add_noise(self, action):
+        """
+        Modify the action with noise
+        """
+        # Continuous actions
+        if self.config.ACTION_SPACE == "continuous":
+            action += self.noise.sample()
+            # Clipped action
+            action = np.clip(action,
+                             *self.config.ACTION_RANGE)
+        # Discrete Actions
+        elif self.config.ACTION_SPACE == "discrete":
+            action = self.noise.sample(action)
+        return action
 
     @abstractmethod
     def step(self):

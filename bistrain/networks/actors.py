@@ -53,8 +53,9 @@ class FCActorDiscrete(nn.Module):
         logits = self.layers[-1](x)
 
         # Distribution
+        bs = state.shape[0]
         dist = Categorical(logits=logits)
-        sample = dist.rsample().view(-1, 1)
+        sample = dist.sample().view(bs, -1)
         log_probs = dist.log_prob(sample)
         return sample, log_probs
 
@@ -97,7 +98,8 @@ class FCActorContinuous(nn.Module):
             self.layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
             # duplicate last layer
             if i == len(layers_sizes) - 2:
-                self.layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
+                self.layers.append(nn.Linear(layers_sizes[i],
+                                   layers_sizes[i + 1]))
 
         # Activation hidden
         self.hidden_activation = getattr(torch, hidden_activation)
