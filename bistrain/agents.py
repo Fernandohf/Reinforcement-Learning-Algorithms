@@ -253,6 +253,7 @@ class DDPGAgent():
         """
         # Shortcut
         config = self.config.TRAINING
+
         # Check if first step
         if self._initial_states is None:
             states = env.reset()
@@ -279,7 +280,7 @@ class DDPGAgent():
             # Multiple updates
             for i in range(config.UPDATE_N_TIMES):
                 experiences = self.memory.sample()
-                self.learn(experiences, config.GAMMA)
+                self._learn(experiences, config.GAMMA)
 
     def act(self, state, explore=True):
         """
@@ -299,7 +300,7 @@ class DDPGAgent():
 
         return action
 
-    def learn(self, experiences, gamma):
+    def _learn(self, experiences, gamma):
         """
         Update policy and value parameters using given batch
         of experience tuples.
@@ -318,6 +319,10 @@ class DDPGAgent():
             gamma: float
                 Discount factor
         """
+        # Shortcut
+        config = self.config.TRAINING
+
+        # Unpack
         states, actions, rewards, next_states, dones = experiences
         # -------------------- Update Critic -------------------- #
         # Predicted next-state actions and Q values from target models
@@ -337,7 +342,7 @@ class DDPGAgent():
 
         # Clip gradients
         torch.nn.utils.clip_grad_norm_(self.critic_local.parameters(),
-                                       self.config.TRAINING.GRADIENT_CLIP)
+                                       config.GRADIENT_CLIP)
         self.critic_local.optimizer.step()
 
         # -------------------- Update Actor -------------------- #
@@ -352,11 +357,11 @@ class DDPGAgent():
 
         # Clip values
         torch.nn.utils.clip_grad_norm_(self.actor_local.parameters(),
-                                       self.config.TRAINING.GRADIENT_CLIP)
+                                       config.GRADIENT_CLIP)
         self.actor_local.optimizer.step()
 
         # ------------- Update Target Networks ------------- #
         soft_updates(self.critic_local, self.critic_target,
-                     self.config.TRAINING.TAU)
+                     config.TAU)
         soft_updates(self.actor_local, self.actor_target,
-                     self.config.TRAINING.TAU)
+                     config.TAU)
