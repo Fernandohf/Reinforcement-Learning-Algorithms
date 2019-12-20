@@ -24,16 +24,13 @@ class A2CAgent(BaseAgent):
             Noise object used in the agent
         """
         # Base class
-        super().__init__(config_file)
+        super().__init__(config_file, noise)
 
         # Actor Network
         self.actor = self._set_policy()
 
         # Critic Network
         self.critic = self._set_val_func()
-
-        # Noise process
-        self.noise = noise
 
         # Reset current status
         self.reset()
@@ -210,7 +207,7 @@ class DDPGAgent():
             Buffer that stores the experiences
         """
         # Base class
-        super().__init__(config_file)
+        super().__init__(config_file, noise)
 
         # Actor Network
         self.actor_local = self._set_policy()
@@ -219,9 +216,6 @@ class DDPGAgent():
         # Critic Network
         self.critic_local = self._set_val_func()
         self.critic_target = self._set_val_func(optimizr=False)
-
-        # Noise process
-        self.noise = noise
 
         # Replay buffer
         self.memory = replay_buffer

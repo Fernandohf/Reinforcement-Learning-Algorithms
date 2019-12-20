@@ -16,7 +16,7 @@ class BaseAgent(ABC):
     """
     Base agent class
     """
-    def __init__(self, config):
+    def __init__(self, config, noise):
         # Load configuration
         if isinstance(config, str):
             config = BisTrainConfiguration(config)
@@ -33,6 +33,9 @@ class BaseAgent(ABC):
             self._bistrain_config = config
             agent = config["AGENT"].upper()
             self.config = LocalConfig(config[agent])
+
+        # Noise process
+        self.noise = noise
 
         super().__init__()
 
