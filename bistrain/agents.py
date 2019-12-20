@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from torch.nn.utils import clip_grad_norm_
 
 from .base.base_agent import BaseAgent
-from .utils.experience import n_step_boostrap, soft_updates
+from .utils.experience import n_step_boostrap, soft_update
 
 
 class A2CAgent(BaseAgent):
@@ -355,7 +355,7 @@ class DDPGAgent():
         self.actor_local.optimizer.step()
 
         # ------------- Update Target Networks ------------- #
-        soft_updates(self.critic_local, self.critic_target,
-                     config.TAU)
-        soft_updates(self.actor_local, self.actor_target,
-                     config.TAU)
+        soft_update(self.critic_local, self.critic_target,
+                    config.TAU)
+        soft_update(self.actor_local, self.actor_target,
+                    config.TAU)
