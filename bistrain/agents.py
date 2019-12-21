@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
-from torch.nn.utils import clip_grad_norm_
 
 from .base.base_agent import BaseAgent
 from .utils.experience import n_step_boostrap, soft_update
@@ -169,9 +168,9 @@ class A2CAgent(BaseAgent):
         critic_loss.backward()
 
         # Gradient clipping
-        if self.config.TRAINING.GRADIENT_CLIP != 0:
-            clip_grad_norm_(self.critic.parameters(),
-                            self.config.TRAINING.GRADIENT_CLIP)
+        self._clip_gradient(self.critic)
+
+        # Run optimizer
         self.critic.optimizer.step()
 
         # ----------------------- Update Actor ----------------------- #
@@ -184,9 +183,8 @@ class A2CAgent(BaseAgent):
         actor_loss.backward()
 
         # Gradient clipping
-        if self.config.TRAINING.GRADIENT_CLIP != 0:
-            clip_grad_norm_(self.critic.parameters(),
-                            self.config.TRAINING.GRADIENT_CLIP)
+        self._clip_gradient(self.actor)
+
         self.actor.optimizer.step()
 
 
@@ -335,8 +333,8 @@ class DDPGAgent():
         critic_loss.backward()
 
         # Clip gradients
-        torch.nn.utils.clip_grad_norm_(self.critic_local.parameters(),
-                                       config.GRADIENT_CLIP)
+        self._clip_gradient(self.critic_local)
+
         self.critic_local.optimizer.step()
 
         # -------------------- Update Actor -------------------- #
@@ -350,8 +348,8 @@ class DDPGAgent():
         actor_loss.backward()
 
         # Clip values
-        torch.nn.utils.clip_grad_norm_(self.actor_local.parameters(),
-                                       config.GRADIENT_CLIP)
+        self._clip_gradient(self.actor_local)
+
         self.actor_local.optimizer.step()
 
         # ------------- Update Target Networks ------------- #
