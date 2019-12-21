@@ -3,8 +3,8 @@ Base agent class
 """
 from abc import ABC, abstractmethod
 
-import torch
 from torch.optim import SGD, Adam, AdamW
+from torch.nn.utils import clip_grad_norm_
 import numpy as np
 
 from ..utils.configuration import BisTrainConfiguration, LocalConfig
@@ -148,6 +148,15 @@ class BaseAgent(ABC):
         elif self.config.ACTION_SPACE == "discrete":
             action = self.noise.sample(action)
         return action
+
+    def _clip_gradient(self, model):
+        """
+        Perform graient clipping in given model
+        """
+        # Gradient clipping
+        if self.config.TRAINING.GRADIENT_CLIP != 0:
+            clip_grad_norm_(model.parameters(),
+                            self.config.TRAINING.GRADIENT_CLIP)
 
     @abstractmethod
     def step(self):
