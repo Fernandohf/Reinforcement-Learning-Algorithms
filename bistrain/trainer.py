@@ -25,10 +25,11 @@ class Trainer():
         super().__init__()
         self.config = config
 
-    def run():
+    def run(self):
         """
         Run the trainer
         """
+        pass
 
 
 class UnityEnvironmentWrapper(Env):
