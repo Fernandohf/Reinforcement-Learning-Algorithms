@@ -6,7 +6,7 @@ DEVICE = option("cuda", "cpu", default="cuda")                    # Device used 
 AGENT = option("a2c", "ddpg", "ppo")                              # Agent algorithm being used
 ACTION_SIZE = integer(min=1, default=1)                           # Action dimensions
 ACTION_SPACE = option("continuous", "discrete")                   # Actions space type
-ACTION_RANGE = float_list()                                       # Actions values allowed range
+ACTION_RANGE = float_list(default=list(0, 1))                     # Actions values allowed range
 STATE_SIZE = integer(min=1)                                       # State dimensions
 
 
@@ -31,7 +31,6 @@ STATE_SIZE = integer(min=1)                                       # State dimens
 
   [[TRAINING]]                                                    #
   GAMMA = float(.1, 1, default=.999)                              #
-  N_STEP_BS = integer(min=1, default=4)                               #
   LAMBDA = float(min=0, max=1, default=.5)                        #
   GRADIENT_CLIP = float(min=0, default=0)                         #
 
@@ -52,12 +51,18 @@ STATE_SIZE = integer(min=1)                                       # State dimens
   OPTIMIZER = option("adam", "adamw"  , "sgd", default="adam")    #
 
   [[TRAINING]]                                                    #
-  BATCH_SIZE = integer(0, 100000, default=256)                    #
-  BUFFER_SIZE = integer(1000, 10000000000, default=10000000)      #
   GAMMA = float(.1, 1, default=.999)                              #
   TAU = float(min=0, max=1, default=0.05)                         #
-  N_STEP_BS = integer(min=1, default=4)                           #
   LAMBDA = float(min=0, max=1, default=0.05)                      #
+  N_STEP_BS = integer(min=1, default=4)                           #
+  GRADIENT_CLIP = float(min=0, default=0)                         #
+  UPDATE_EVERY_N_STEPS = integer(min=1)                           #
+  UPDATE_N_TIMES = integer(min=1)                                 #
+  GRADIENT_CLIP = float(min=0)                                    #
+
+  [[BUFFER]]                                                      #
+  BATCH_SIZE = integer(0, 100000, default=256)                    #
+  BUFFER_SIZE = integer(1000, 10000000000, default=10000000)      #
 
 
 [PPO]                                                             # *PPO AGENT CONFIGURATIONS*
