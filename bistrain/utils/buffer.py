@@ -5,6 +5,7 @@ import random
 import torch
 import numpy as np
 from collections import deque, namedtuple
+from ..utils.configuration import LocalConfig
 
 
 class ReplayBuffer:
@@ -17,12 +18,13 @@ class ReplayBuffer:
 
         Parameters
         ----------
-            config : LocalConfig
+            config: dict or LocalConfig
                 All configuration parameters of the buffer
                 (buffer_size, batch_size, seed, device)
         """
-        self.config = config
-        self.memory = deque(maxlen=config.BUFFER_SIZE)  # internal memory
+        self.config = LocalConfig(config)
+        # Interal memmory
+        self.memory = deque(maxlen=int(self.config.BUFFER_SIZE))
         self.experience = namedtuple("Experience",
                                      field_names=["state", "action", "reward",
                                                   "next_state", "done"])

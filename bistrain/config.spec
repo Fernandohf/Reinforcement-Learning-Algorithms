@@ -37,11 +37,14 @@ STATE_SIZE = integer(min=1)                                       # State dimens
 
 [DDPG]                                                            # *DDPG AGENTS CONFIGURATIONS TODO*
   [[ACTOR]]                                                       # *ACTOR/POLICY CONFIGURATION*
-  ARCHITECTURE = option("fc", "lstm", default="fc")               # TODO
   HIDDEN_SIZE = int_list(default=list(256, 128))                  #
+  HIDDEN_ACTIV = option("relu", "leaky_relu", default="relu")     #
   LR = float(min=0, default=0.01)                                 #
   WEIGHT_DECAY = float(min=0, default=0)                          #
   OPTIMIZER = option("adam", "adamw", "sgd", default="adam")      #
+  OUTPUT_LOC_ACTIV = option("relu", "leaky_relu", default="relu")  #
+  OUTPUT_SCALE_ACTIV = option("relu", "leaky_relu", default="relu") #
+  OUTPUT_LOC_SCALER = float(min=0, default=1)                     #
 
   [[CRITIC]]                                                      #
   ARCHITECTURE = option("fc", "lstm", default="fc")               #
@@ -55,10 +58,9 @@ STATE_SIZE = integer(min=1)                                       # State dimens
   TAU = float(min=0, max=1, default=0.05)                         #
   LAMBDA = float(min=0, max=1, default=0.05)                      #
   N_STEP_BS = integer(min=1, default=4)                           #
+  UPDATE_EVERY_N_STEPS = integer(min=1, default=1)                #
+  UPDATE_N_TIMES = integer(min=1, default=1)                      #
   GRADIENT_CLIP = float(min=0, default=0)                         #
-  UPDATE_EVERY_N_STEPS = integer(min=1)                           #
-  UPDATE_N_TIMES = integer(min=1)                                 #
-  GRADIENT_CLIP = float(min=0)                                    #
 
   [[BUFFER]]                                                      #
   BATCH_SIZE = integer(0, 100000, default=256)                    #

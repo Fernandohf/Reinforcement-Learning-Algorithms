@@ -188,12 +188,12 @@ class A2CAgent(BaseAgent):
         self.actor.optimizer.step()
 
 
-class DDPGAgent():
+class DDPGAgent(BaseAgent):
     """Interacts with and learns from the environment."""
 
     def __init__(self, config_file, noise, replay_buffer):
         """
-        Initialize an Advantage Actor Critic (A2C) Agent object.
+        Initialize an DDPG TODO Agent object.
 
         Parameters
         ----------
@@ -213,7 +213,7 @@ class DDPGAgent():
 
         # Critic Network
         self.critic_local = self._set_val_func()
-        self.critic_target = self._set_val_func(optimizr=False)
+        self.critic_target = self._set_val_func(optimizer=False)
 
         # Replay buffer
         self.memory = replay_buffer
