@@ -8,7 +8,7 @@ import torch.optim as optim
 from .base.base_agent import BaseAgent
 from .networks.actors import FCActorContinuous
 from .networks.critics import FCCritic
-from .utils.bootstrap import n_step_boostrap
+from .utils.expe import n_step_boostrap
 # In case of being imported on notebook
 try:
     get_ipython
