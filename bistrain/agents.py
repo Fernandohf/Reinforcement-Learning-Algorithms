@@ -54,9 +54,9 @@ class A2CAgent(BaseAgent):
             action = action.cpu().detach().numpy()
         self.actor.train()
 
-        # Add noise
+        # Add action noise
         if explore:
-            action = self._add_noise(action)
+            action = self._add_action_noise(action)
 
         return action
 
@@ -193,13 +193,13 @@ class DDPGAgent(BaseAgent):
 
     def __init__(self, config_file, noise, replay_buffer):
         """
-        Initialize an DDPG TODO Agent object.
+        Initialize an Deep Deterministic Policy Gradient Agent object.
 
         Parameters
         ----------
         config_file: str, LocalConfig or BisTrainConfiguration
             Path to configuration file or configuration object
-        noise: utils.noise
+        noise: utils.noise object
             Noise object used in the agent
         replay_buffer: utils.replay
             Buffer that stores the experiences
@@ -288,7 +288,7 @@ class DDPGAgent(BaseAgent):
 
         # Exploration
         if explore:
-            action = self._add_noise(action)
+            action = self._add_action_noise(action)
 
         return action
 

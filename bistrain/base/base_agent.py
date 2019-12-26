@@ -134,7 +134,7 @@ class BaseAgent(ABC):
                              weight_decay=config.WEIGHT_DECAY)
         return optimizer
 
-    def _add_noise(self, action):
+    def _add_action_noise(self, action):
         """
         Modify the action with noise
         """
