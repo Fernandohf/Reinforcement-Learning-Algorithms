@@ -36,7 +36,7 @@ class TestBisTrainConfiguration():
 
     def test_dict_access1(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        assert a["GLOBAL"]["ACTION_SIZE"] == 2
+        assert a["GLOBAL"]["ACTION_SIZE"] == 1
 
     def test_dict_access2(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
@@ -48,7 +48,7 @@ class TestBisTrainConfiguration():
 
     def test_dict_access4(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        assert a["ACTION_SIZE"] == 2
+        assert a["ACTION_SIZE"] == 1
 
     def test_dict_access5(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
@@ -56,7 +56,7 @@ class TestBisTrainConfiguration():
 
     def test_dict_access6(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        assert a["STATE_SIZE"] == 24
+        assert a["STATE_SIZE"] == 3
 
     def test_default_key(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC,

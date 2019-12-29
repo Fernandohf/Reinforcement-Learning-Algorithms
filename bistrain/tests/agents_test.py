@@ -26,8 +26,8 @@ class TestA2CAgent():
 
     def _create_agent(self, file=VALID_FILE):
         c = BisTrainConfiguration(file, configspec=CONFIG_SPEC)
-        n = GaussianNoise(c["EXPLORATION"])
-        a = A2CAgent(c["A2C"], n)
+        n = GaussianNoise(c.get_localconfig("EXPLORATION"))
+        a = A2CAgent(c.get_localconfig("A2C"), n)
         return a
 
     def test_optimizer(self):
@@ -50,8 +50,8 @@ class TestDDPGgent():
 
     def _create_agent(self, file=VALID_FILE_DDPG):
         c = BisTrainConfiguration(file, configspec=CONFIG_SPEC)
-        n = OUNoise(c["EXPLORATION"])
-        a = DDPGAgent(c["DDPG"], n)
+        n = OUNoise(c.get_localconfig("EXPLORATION"))
+        a = DDPGAgent(c.get_localconfig("DDPG"), n)
         return a
 
     def test_optimizer(self):

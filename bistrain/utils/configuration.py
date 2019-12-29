@@ -91,6 +91,12 @@ class BisTrainConfiguration(ConfigObj):
 
         return _copy
 
+    def get_localconfig(self, section):
+        """
+        Return LocalConfig object of the given section
+        """
+        return LocalConfig(self[section])
+
 
 class LocalConfig():
     """
