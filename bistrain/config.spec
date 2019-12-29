@@ -63,6 +63,7 @@ STATE_SIZE = integer(min=1)                                       # State dimens
   GRADIENT_CLIP = float(min=0, default=0)                         #
 
   [[BUFFER]]                                                      #
+  TYPE = option("replay", "priority", default="replay")           #
   BATCH_SIZE = integer(0, 100000, default=256)                    #
   BUFFER_SIZE = integer(1000, 10000000000, default=10000000)      #
 
