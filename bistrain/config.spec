@@ -8,6 +8,7 @@ ACTION_SIZE = integer(min=1, default=1)                           # Action dimen
 ACTION_SPACE = option("continuous", "discrete")                   # Actions space type
 ACTION_RANGE = float_list(default=list(0, 1))                     # Actions values allowed range
 STATE_SIZE = integer(min=1)                                       # State dimensions
+ENVIRONMENT = string()                                            # Environment name
 
 
 [A2C]                                                             # *A2C AGENTS CONFIGURATIONS*
