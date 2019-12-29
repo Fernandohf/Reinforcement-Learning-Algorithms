@@ -47,7 +47,6 @@ class TestDDPGgent():
     """
     Test class to DDPG Agent
     """
-
     def _create_agent(self, file=VALID_FILE_DDPG):
         c = BisTrainConfiguration(file, configspec=CONFIG_SPEC)
         n = OUNoise(c.get_localconfig("EXPLORATION"))

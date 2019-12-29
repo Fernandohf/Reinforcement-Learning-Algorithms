@@ -28,3 +28,8 @@ class TestTrainer():
         c = BisTrainConfiguration(VALID_FILE_A2C, configspec=CONFIG_SPEC)
         t = Trainer(c)
         assert t
+
+    def test_init(self):
+        c = BisTrainConfiguration(VALID_FILE_A2C, configspec=CONFIG_SPEC)
+        t = Trainer(c)
+        assert t.config.EPISODES == 1000
