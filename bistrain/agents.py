@@ -191,7 +191,7 @@ class A2CAgent(BaseAgent):
 class DDPGAgent(BaseAgent):
     """Interacts with and learns from the environment."""
 
-    def __init__(self, config_file, noise, replay_buffer):
+    def __init__(self, config_file, noise):
         """
         Initialize an Deep Deterministic Policy Gradient Agent object.
 
@@ -201,8 +201,6 @@ class DDPGAgent(BaseAgent):
             Path to configuration file or configuration object
         noise: utils.noise object
             Noise object used in the agent
-        replay_buffer: utils.replay
-            Buffer that stores the experiences
         """
         # Base class
         super().__init__(config_file, noise)
@@ -216,7 +214,7 @@ class DDPGAgent(BaseAgent):
         self.critic_target = self._set_val_func(optimizer=False)
 
         # Replay buffer
-        self.memory = replay_buffer
+        self.memory = self._set_buffer()
 
         # Reset current status
         self.reset()

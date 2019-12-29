@@ -52,8 +52,7 @@ class TestDDPGgent():
     def _create_agent(self, file=VALID_FILE_DDPG):
         c = BisTrainConfiguration(file, configspec=CONFIG_SPEC)
         n = OUNoise(c["EXPLORATION"])
-        b = ReplayBuffer(c["BUFFER"])
-        a = DDPGAgent(c["DDPG"], n, b)
+        a = DDPGAgent(c["DDPG"], n)
         return a
 
     def test_optimizer(self):

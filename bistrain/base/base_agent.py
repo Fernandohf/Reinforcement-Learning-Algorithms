@@ -8,6 +8,7 @@ from torch.nn.utils import clip_grad_norm_
 import numpy as np
 
 from ..utils.configuration import BisTrainConfiguration, LocalConfig
+from ..utils.buffer import ReplayBuffer
 from ..networks.actors import FCActorDiscrete, FCActorContinuous
 from ..networks.critics import FCCritic, LSTMCritic
 
@@ -133,6 +134,19 @@ class BaseAgent(ABC):
             optimizer = Adam(parameters, lr=config.LR,
                              weight_decay=config.WEIGHT_DECAY)
         return optimizer
+
+    def _set_buffer(self):
+        """
+        Set the buffer defined in the [BUFFER] subsection
+        of the configuration file.
+        """
+        buffer_config = self.config.BUFFER
+        if buffer_config.TYPE == 'replay':
+            buffer = ReplayBuffer(buffer_config)
+        else:
+            msg = f"Noise type {config.TYPE} not implemented yet."
+            raise NotImplementedError(msg)
+        return buffer
 
     def _add_action_noise(self, action):
         """
