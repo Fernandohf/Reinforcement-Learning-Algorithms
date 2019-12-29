@@ -272,6 +272,11 @@ class DDPGAgent(BaseAgent):
                 experiences = self.memory.sample()
                 self._learn(experiences, config.GAMMA)
 
+        scores = reward[:, 0].mean()
+        done = done[:, -1].any()
+
+        return scores, done
+
     def act(self, state, explore=True):
         """
         Returns actions for given state as per current policy.
