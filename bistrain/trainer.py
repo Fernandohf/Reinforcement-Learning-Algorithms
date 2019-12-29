@@ -7,6 +7,7 @@ from collections import deque
 from .utils.noise import OUNoise, GaussianNoise
 from .agents import DDPGAgent, A2CAgent
 from .utils.configuration import BisTrainConfiguration, LocalConfig
+from .utils.experience import make_multi_envs
 
 # In case of being imported on notebook
 try:
@@ -60,15 +61,29 @@ class Trainer():
         self.env = env or self.load_environment()
 
     def load_environment(self):
+        """
+        Return environment
+
+        Return
+        ------
+        env: Env
+            Environment object
+        """
         # Load environment(s)
         if os.path.isfile(self.config.ENVIRONMENT):
             # Check if the env is a local file
             env = UnityEnvironmentWrapper(self.config.ENVIRONMENT,
                                           self.config.N_BRAINS)
         else:
-            # Gym environment
-            env = gym.make(self.config.ENVIRONMENT)
-            env.seed(self.config.SEED)
+            if self.config.N_ENVS == 1:
+                # Gym environment
+                env = gym.make(self.config.ENVIRONMENT)
+                env.seed(self.config.SEED)
+            else:
+                # Gym environments
+                env = make_multi_envs(self.config.N_ENVS,
+                                      self.config.ENVIRONMENT,
+                                      self.config.SEED)
         return env
 
     def load_noise(self):
@@ -129,7 +144,7 @@ class Trainer():
         Parameters
         ----------
         save: bool
-            Weahter save the progress
+            Wether save the progress
         """
         # Saving metrics
         scores_deque = deque(maxlen=self.config.PRINT_EVERY)
