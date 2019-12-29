@@ -7,7 +7,6 @@ from torch.optim import Adam
 
 from ..agents import A2CAgent, DDPGAgent
 from ..utils.noise import GaussianNoise, OUNoise
-from ..utils.buffer import ReplayBuffer
 from ..utils.configuration import BisTrainConfiguration
 from ..networks.actors import FCActorContinuous, FCActorDiscrete
 

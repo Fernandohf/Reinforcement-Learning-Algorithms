@@ -7,7 +7,6 @@ from torch.optim import SGD, Adam, AdamW
 from torch.nn.utils import clip_grad_norm_
 import numpy as np
 
-from ..utils.configuration import BisTrainConfiguration, LocalConfig
 from ..utils.buffer import ReplayBuffer
 from ..networks.actors import FCActorDiscrete, FCActorContinuous
 from ..networks.critics import FCCritic, LSTMCritic
@@ -120,7 +119,7 @@ class BaseAgent(ABC):
         if buffer_config.TYPE == 'replay':
             buffer = ReplayBuffer(buffer_config)
         else:
-            msg = f"Noise type {config.TYPE} not implemented yet."
+            msg = f"Noise type {buffer_config.TYPE} not implemented yet."
             raise NotImplementedError(msg)
         return buffer
 
