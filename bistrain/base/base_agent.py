@@ -18,36 +18,12 @@ class BaseAgent(ABC):
     Base agent class
     """
     def __init__(self, config, noise):
-        # Load configuration
-        if isinstance(config, str):
-            config = BisTrainConfiguration(config)
-        elif isinstance(config, dict):
-            self.config = LocalConfig(config)
-            self._bistrain_config = None
-        elif isinstance(config, BisTrainConfiguration):
-            pass
-        else:
-            raise ValueError("Configuration file is invalid!")
-
-        if isinstance(config, BisTrainConfiguration):
-            # Main configuration
-            self._bistrain_config = config
-            agent = config["AGENT"].upper()
-            self.config = LocalConfig(config[agent])
-
+        # Configuration
+        self.config = config
         # Noise process
         self.noise = noise
 
         super().__init__()
-
-    # def _set_noise(self):
-    #     config = self.config.EXPLORATION
-    #     if config.TYPE == 'ou':
-    #         noise = OUNoise(config)
-    #     else:
-    #         # Default
-    #         noise = GaussianNoise(config)
-    #     return noise
 
     def _set_policy(self, optimizer=True):
         """
