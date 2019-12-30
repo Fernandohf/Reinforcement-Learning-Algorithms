@@ -5,17 +5,17 @@ import os
 
 from torch.optim import Adam
 
-from ..agents import A2CAgent, DDPGAgent
-from ..utils.noise import GaussianNoise, OUNoise
-from ..utils.configuration import BisTrainConfiguration
-from ..networks.actors import FCActorContinuous, FCActorDiscrete
+from bistrain.agents import A2CAgent, DDPGAgent
+from bistrain.utils.noise import GaussianNoise, OUNoise
+from bistrain.utils.configuration import BisTrainConfiguration
+from bistrain.networks.actors import FCActorContinuous, FCActorDiscrete
 
 
 LOCAL_FOLDER = os.path.dirname(__file__)
 VALID_FILE = os.path.join(LOCAL_FOLDER, 'test_valid_config.yaml')
 VALID_FILE_A2C = os.path.join(LOCAL_FOLDER, 'test_valid_a2c.yaml')
 VALID_FILE_DDPG = os.path.join(LOCAL_FOLDER, 'test_valid_ddpg.yaml')
-CONFIG_SPEC = os.path.join('config.spec')
+CONFIG_SPEC = os.path.join('bistrain', 'config.spec')
 
 
 # TODO - learning tests

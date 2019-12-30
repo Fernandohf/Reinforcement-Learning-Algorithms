@@ -3,17 +3,17 @@ import os
 import numpy as np
 import pytest
 
-from ..utils.configuration import (BisTrainConfiguration,
-                                   LocalConfig,
-                                   ValidationError,
-                                   InvalidKey)
-from ..utils.noise import GaussianNoise, OUNoise
+from bistrain.utils.configuration import (BisTrainConfiguration,
+                                          LocalConfig,
+                                          ValidationError,
+                                          InvalidKey)
+from bistrain.utils.noise import GaussianNoise, OUNoise
 
 LOCAL_FOLDER = os.path.dirname(__file__)
 INVALID_FILE_1 = os.path.join(LOCAL_FOLDER, 'test_invalid_config_1.yaml')
 INVALID_FILE_2 = os.path.join(LOCAL_FOLDER, 'test_invalid_config_2.yaml')
 VALID_FILE = os.path.join(LOCAL_FOLDER, 'test_valid_config.yaml')
-CONFIG_SPEC = os.path.join('config.spec')
+CONFIG_SPEC = os.path.join('bistrain', 'config.spec')
 
 
 class TestBisTrainConfiguration():

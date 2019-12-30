@@ -1,5 +1,5 @@
-from ..networks.actors import FCActorContinuous, FCActorDiscrete
-from ..networks.critics import FCCritic  # LSTMCritics
+from bistrain.networks.actors import FCActorContinuous, FCActorDiscrete
+from bistrain.networks.critics import FCCritic  # LSTMCritics
 import torch
 
 
