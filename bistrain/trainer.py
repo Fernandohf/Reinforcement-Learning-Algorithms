@@ -73,7 +73,7 @@ class Trainer():
         if os.path.isfile(self.config.ENVIRONMENT):
             # Check if the env is a local file
             env = UnityEnvironmentWrapper(self.config.ENVIRONMENT,
-                                          self.config.N_BRAINS)
+                                          self.config.N_ENVS)
         else:
             if self.config.N_ENVS == 1:
                 # Gym environment
