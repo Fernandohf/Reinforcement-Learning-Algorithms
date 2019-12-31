@@ -3,7 +3,7 @@ import torch.nn.functional as F
 import numpy as np
 
 from .base.base_agent import BaseAgent
-from .utils.experience import n_step_boostrap, soft_update
+from .utils import n_step_boostrap, soft_update
 
 
 class A2CAgent(BaseAgent):
