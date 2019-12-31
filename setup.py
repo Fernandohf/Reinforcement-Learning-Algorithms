@@ -12,9 +12,10 @@ setup(
   download_url = 'https://github.com/Fernandohf/Reinforcement-Learning-Algorithms/archive/0.1.tar.gz',  # TODO
   keywords = ['PYTORCH', 'A2C', 'DDPG', 'REINFORCEMENT-LEARNING', 'RL'],
   install_requires=[  # TODO
-          'pytorch',
+          'torch',
           'gym',
           'tqdm',
+          'numpy',
       ],
   classifiers=[
     'Development Status :: 3 - Alpha',
