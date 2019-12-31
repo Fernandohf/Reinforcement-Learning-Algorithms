@@ -121,7 +121,7 @@ def n_step_boostrap(envs, agent, previous_states, n_bootstrap=5):
 
 def soft_update(self, local_model, target_model, tau):
     """
-    Soft update model parameters.
+    Soft update model parameters, perform changes in-place.
     θ_target = τ * θ_local + (1 - τ) * θ_target
 
     Parameters

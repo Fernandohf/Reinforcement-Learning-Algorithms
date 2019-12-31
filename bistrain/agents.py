@@ -1,10 +1,9 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
-from torch.nn.utils import clip_grad_norm_
 
 from .base.base_agent import BaseAgent
-from .utils.experience import n_step_boostrap, soft_updates
+from .utils.experience import n_step_boostrap, soft_update
 
 
 class A2CAgent(BaseAgent):
@@ -24,16 +23,13 @@ class A2CAgent(BaseAgent):
             Noise object used in the agent
         """
         # Base class
-        super().__init__(config_file)
+        super().__init__(config_file, noise)
 
         # Actor Network
         self.actor = self._set_policy()
 
         # Critic Network
         self.critic = self._set_val_func()
-
-        # Noise process
-        self.noise = noise
 
         # Reset current status
         self.reset()
@@ -58,9 +54,9 @@ class A2CAgent(BaseAgent):
             action = action.cpu().detach().numpy()
         self.actor.train()
 
-        # Add noise
+        # Add action noise
         if explore:
-            action = self._add_noise(action)
+            action = self._add_action_noise(action)
 
         return action
 
@@ -99,7 +95,7 @@ class A2CAgent(BaseAgent):
         # Unroll trajectories of parallel envs
         s, a, r, sp, dones = n_step_boostrap(envs, self,
                                              self._initial_states,
-                                             n_step=config.N_STEP_BS)
+                                             n_bootstrap=config.N_STEP_BS)
         self._learn(s, a, r, sp, dones, self._gamma)
         # Start from the next state
         self._initial_states = sp[:, 0, :]
@@ -172,9 +168,9 @@ class A2CAgent(BaseAgent):
         critic_loss.backward()
 
         # Gradient clipping
-        if self.config.TRAINING.GRADIENT_CLIP != 0:
-            clip_grad_norm_(self.critic.parameters(),
-                            self.config.TRAINING.GRADIENT_CLIP)
+        self._clip_gradient(self.critic)
+
+        # Run optimizer
         self.critic.optimizer.step()
 
         # ----------------------- Update Actor ----------------------- #
@@ -187,30 +183,27 @@ class A2CAgent(BaseAgent):
         actor_loss.backward()
 
         # Gradient clipping
-        if self.config.TRAINING.GRADIENT_CLIP != 0:
-            clip_grad_norm_(self.critic.parameters(),
-                            self.config.TRAINING.GRADIENT_CLIP)
+        self._clip_gradient(self.actor)
+
         self.actor.optimizer.step()
 
 
-class DDPGAgent():
+class DDPGAgent(BaseAgent):
     """Interacts with and learns from the environment."""
 
-    def __init__(self, config_file, noise, replay_buffer):
+    def __init__(self, config_file, noise):
         """
-        Initialize an Advantage Actor Critic (A2C) Agent object.
+        Initialize an Deep Deterministic Policy Gradient Agent object.
 
         Parameters
         ----------
         config_file: str, LocalConfig or BisTrainConfiguration
             Path to configuration file or configuration object
-        noise: utils.noise
+        noise: utils.noise object
             Noise object used in the agent
-        replay_buffer: utils.replay
-            Buffer that stores the experiences
         """
         # Base class
-        super().__init__(config_file)
+        super().__init__(config_file, noise)
 
         # Actor Network
         self.actor_local = self._set_policy()
@@ -218,13 +211,10 @@ class DDPGAgent():
 
         # Critic Network
         self.critic_local = self._set_val_func()
-        self.critic_target = self._set_val_func(optimizr=False)
-
-        # Noise process
-        self.noise = noise
+        self.critic_target = self._set_val_func(optimizer=False)
 
         # Replay buffer
-        self.memory = replay_buffer
+        self.memory = self._set_buffer()
 
         # Reset current status
         self.reset()
@@ -253,6 +243,7 @@ class DDPGAgent():
         """
         # Shortcut
         config = self.config.TRAINING
+
         # Check if first step
         if self._initial_states is None:
             states = env.reset()
@@ -279,7 +270,12 @@ class DDPGAgent():
             # Multiple updates
             for i in range(config.UPDATE_N_TIMES):
                 experiences = self.memory.sample()
-                self.learn(experiences, config.GAMMA)
+                self._learn(experiences, config.GAMMA)
+
+        scores = reward[:, 0].mean()
+        done = done[:, -1].any()
+
+        return scores, done
 
     def act(self, state, explore=True):
         """
@@ -295,11 +291,11 @@ class DDPGAgent():
 
         # Exploration
         if explore:
-            action = self._add_noise(action)
+            action = self._add_action_noise(action)
 
         return action
 
-    def learn(self, experiences, gamma):
+    def _learn(self, experiences, gamma):
         """
         Update policy and value parameters using given batch
         of experience tuples.
@@ -318,6 +314,10 @@ class DDPGAgent():
             gamma: float
                 Discount factor
         """
+        # Shortcut
+        config = self.config.TRAINING
+
+        # Unpack
         states, actions, rewards, next_states, dones = experiences
         # -------------------- Update Critic -------------------- #
         # Predicted next-state actions and Q values from target models
@@ -336,8 +336,8 @@ class DDPGAgent():
         critic_loss.backward()
 
         # Clip gradients
-        torch.nn.utils.clip_grad_norm_(self.critic_local.parameters(),
-                                       self.config.TRAINING.GRADIENT_CLIP)
+        self._clip_gradient(self.critic_local)
+
         self.critic_local.optimizer.step()
 
         # -------------------- Update Actor -------------------- #
@@ -351,12 +351,12 @@ class DDPGAgent():
         actor_loss.backward()
 
         # Clip values
-        torch.nn.utils.clip_grad_norm_(self.actor_local.parameters(),
-                                       self.config.TRAINING.GRADIENT_CLIP)
+        self._clip_gradient(self.actor_local)
+
         self.actor_local.optimizer.step()
 
         # ------------- Update Target Networks ------------- #
-        soft_updates(self.critic_local, self.critic_target,
-                     self.config.TRAINING.TAU)
-        soft_updates(self.actor_local, self.actor_target,
-                     self.config.TRAINING.TAU)
+        soft_update(self.critic_local, self.critic_target,
+                    config.TAU)
+        soft_update(self.actor_local, self.actor_target,
+                    config.TAU)
