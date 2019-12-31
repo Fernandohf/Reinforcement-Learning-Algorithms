@@ -6,7 +6,7 @@ import gym
 
 from bistrain.trainer import Trainer
 from bistrain.utils.configuration import BisTrainConfiguration
-from bistrain.utils.noise import GaussianNoise
+from bistrain.noise import GaussianNoise
 from bistrain.agents import A2CAgent
 
 

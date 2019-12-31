@@ -1,5 +1,5 @@
 """
-Base agent class
+Base classes
 """
 from abc import ABC, abstractmethod
 
@@ -7,7 +7,8 @@ from torch.optim import SGD, Adam, AdamW
 from torch.nn.utils import clip_grad_norm_
 import numpy as np
 
-from ..utils.buffer import ReplayBuffer
+from ..buffers import ReplayBuffer
+from ..utils.configuration import LocalConfig
 from ..networks.actors import FCActorDiscrete, FCActorContinuous
 from ..networks.critics import FCCritic, LSTMCritic
 
@@ -160,4 +161,22 @@ class BaseAgent(ABC):
 
     @abstractmethod
     def _learn(self):
+        pass
+
+
+class BaseNoise(ABC):
+    """
+    Base class for noise processes
+    """
+
+    def __init__(self, config):
+        self.config = LocalConfig(config)
+        super().__init__()
+
+    @abstractmethod
+    def sample(self,):
+        pass
+
+    @abstractmethod
+    def reset(self):
         pass

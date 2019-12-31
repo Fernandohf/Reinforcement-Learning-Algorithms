@@ -1,13 +1,14 @@
 import os
-from gym.core import Env
-import gym
-import numpy as np
 from collections import deque
 
-from .utils.noise import OUNoise, GaussianNoise
+import gym
+import numpy as np
+from gym.core import Env
+
+from .noise import OUNoise, GaussianNoise
 from .agents import DDPGAgent, A2CAgent
 from .utils.configuration import BisTrainConfiguration, LocalConfig
-from .utils.experience import make_multi_envs
+from .utils import make_multi_envs
 
 # In case of being imported on notebook
 try:

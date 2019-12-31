@@ -6,7 +6,7 @@ import os
 from torch.optim import Adam
 
 from bistrain.agents import A2CAgent, DDPGAgent
-from bistrain.utils.noise import GaussianNoise, OUNoise
+from bistrain.noise import GaussianNoise, OUNoise
 from bistrain.utils.configuration import BisTrainConfiguration
 from bistrain.networks.actors import FCActorContinuous, FCActorDiscrete
 

@@ -7,7 +7,7 @@ from bistrain.utils.configuration import (BisTrainConfiguration,
                                           LocalConfig,
                                           ValidationError,
                                           InvalidKey)
-from bistrain.utils.noise import GaussianNoise, OUNoise
+from bistrain.noise import GaussianNoise, OUNoise
 
 LOCAL_FOLDER = os.path.dirname(__file__)
 INVALID_FILE_1 = os.path.join(LOCAL_FOLDER, 'test_invalid_config_1.yaml')

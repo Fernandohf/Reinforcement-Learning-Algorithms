@@ -1,9 +1,9 @@
-import numpy as np
 import torch
 import torch.nn.functional as F
+import numpy as np
 
-from .base.base_agent import BaseAgent
-from .utils.experience import n_step_boostrap, soft_update
+from .base.core import BaseAgent
+from .utils import n_step_boostrap, soft_update
 
 
 class A2CAgent(BaseAgent):

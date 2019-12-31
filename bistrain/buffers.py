@@ -2,10 +2,12 @@
 Implementations of Replay Buffers
 """
 import random
+from collections import deque, namedtuple
+
 import torch
 import numpy as np
-from collections import deque, namedtuple
-from ..utils.configuration import LocalConfig
+
+from .utils.configuration import LocalConfig
 
 
 class ReplayBuffer:
