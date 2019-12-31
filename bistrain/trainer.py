@@ -7,7 +7,7 @@ from gym.core import Env
 
 from .noise import OUNoise, GaussianNoise
 from .agents import DDPGAgent, A2CAgent
-from .configuration import BisTrainConfiguration, LocalConfig
+from .utils.configuration import BisTrainConfiguration, LocalConfig
 from .utils import make_multi_envs
 
 # In case of being imported on notebook

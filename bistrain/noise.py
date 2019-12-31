@@ -5,7 +5,7 @@ import random
 
 import numpy as np
 
-from ..base.base_noise import BaseNoise
+from .base.core import BaseNoise
 
 
 class GaussianNoise(BaseNoise):

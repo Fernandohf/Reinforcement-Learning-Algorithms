@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 
-from .base.base_agent import BaseAgent
+from .base.core import BaseAgent
 from .utils import n_step_boostrap, soft_update
 
 
