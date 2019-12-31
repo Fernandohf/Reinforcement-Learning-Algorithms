@@ -55,3 +55,4 @@ dkms.conf
 *pytestdebug.log
 *.pytest_cache
 .vscode
+*-checkpoint.ipynb
