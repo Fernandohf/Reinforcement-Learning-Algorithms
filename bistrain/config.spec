@@ -103,7 +103,7 @@ THETA = float(min=0, default=0.05)                              #
 
 
 [TRAINER]
-MAX_STEPS = integer(1, 100000, default=200)                           #
+MAX_STEPS = integer(1, 100000, default=200)                       #
 N_ENVS =  integer(1, 1000, default=1)                             #
 EPISODES =  integer(1, 100000, default=500)                       #
 PRINT_EVERY =  integer(1, 1000, default=100)                      #
