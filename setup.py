@@ -4,8 +4,8 @@ setup(
   packages = ['bistrain'],
   version = '0.1',
   license = 'MIT',
-  description = 'Simple library of Reinforcement Learning Algorithms\
-                 implemented in Pytorch',
+  description = '''Simple library of Reinforcement Learning Algorithms
+                 implemented in Pytorch''',
   author = 'Fernando Henrique',
   author_email = 'nandohfernandes@gmail.com',
   url = 'https://github.com/Fernandohf/Reinforcement-Learning-Algorithms',
