@@ -1,3 +1,6 @@
+"""
+Trainer code
+"""
 import os
 from collections import deque
 
@@ -9,6 +12,10 @@ from .noise import OUNoise, GaussianNoise
 from .agents import DDPGAgent, A2CAgent
 from .config.configuration import BisTrainConfiguration, LocalConfig
 from .utils import make_multi_envs
+from .config import (CONFIGSPEC_DDPG,
+                     CONFIGSPEC_PPO,
+                     CONFIGSPEC_A2C,
+                     CONFIG_SPEC)
 
 # In case of being imported on notebook
 try:
@@ -16,6 +23,17 @@ try:
     from tqdm import tqdm_notebook as tqdm
 except NameError:
     from tqdm import tqdm
+
+
+def get_specfile(agent_type):
+    if agent_type == "DDPG":
+        return CONFIGSPEC_DDPG
+    elif agent_type == "PPO":
+        return CONFIGSPEC_PPO
+    elif agent_type == "A2C":
+        return CONFIGSPEC_A2C
+    else:
+        return CONFIG_SPEC
 
 
 class Trainer():
@@ -46,7 +64,9 @@ class Trainer():
 
         # Load global/local config
         if isinstance(config, str):
-            config = BisTrainConfiguration(config)
+            c = BisTrainConfiguration(config)
+            config = BisTrainConfiguration(config,
+                                           get_specfile(c["AGENT"].upper()))
         elif isinstance(config, BisTrainConfiguration):
             pass
         else:

@@ -1,12 +1,13 @@
 """
 Handle configurations files
 """
-import os
 import logging
 from copy import deepcopy
 
 from configobj import ConfigObj
 from validate import Validator
+
+from . import CONFIG_SPEC
 
 
 class InvalidKey(ValueError):
@@ -58,7 +59,6 @@ class BisTrainConfiguration(ConfigObj):
     """
     Extended class with built-in validation
     """
-    CONFIG_SPEC = os.path.join(os.path.dirname(__file__), "config.spec")
 
     def __init__(self, *args, configspec=CONFIG_SPEC,
                  default_key="GLOBAL", **kwargs):
@@ -99,6 +99,26 @@ class BisTrainConfiguration(ConfigObj):
         Return LocalConfig object of the given section
         """
         return LocalConfig(self[section])
+
+    def __str__(self):
+        """
+        Beatiful visualization
+        """
+        def pretty_line(values, d=0):
+            if isinstance(values, dict):
+                return ("\n" +
+                        ("\t" * d)).join([k + ":\t" + pretty_line(v, d+1)
+                                          for k, v in values.items()]) + "\n"
+            else:
+                return str(values)
+
+        return pretty_line(self)
+
+    def _repr_html_(self):
+        """
+        Jupyter notebooks representation
+        """
+        return "<pre>" + self.__str__() + "</pre>"
 
 
 class LocalConfig():
