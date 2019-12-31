@@ -1,8 +1,8 @@
 """
 Utilities functions for bootstraping experiences
 """
-import numpy as np
 import gym
+import numpy as np
 from gym.vector import SyncVectorEnv
 
 

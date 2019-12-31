@@ -1,8 +1,9 @@
 import os
-from gym.core import Env
+from collections import deque
+
 import gym
 import numpy as np
-from collections import deque
+from gym.core import Env
 
 from .utils.noise import OUNoise, GaussianNoise
 from .agents import DDPGAgent, A2CAgent

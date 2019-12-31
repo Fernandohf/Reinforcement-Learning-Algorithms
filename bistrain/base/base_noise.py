@@ -2,6 +2,7 @@
 Base noise class
 """
 from abc import ABC, abstractmethod
+
 from ..utils.configuration import LocalConfig
 
 

@@ -1,6 +1,6 @@
-import numpy as np
 import torch
 import torch.nn.functional as F
+import numpy as np
 
 from .base.base_agent import BaseAgent
 from .utils.experience import n_step_boostrap, soft_update
