@@ -3,17 +3,17 @@ import os
 import numpy as np
 import pytest
 
-from bistrain.utils.configuration import (BisTrainConfiguration,
-                                          LocalConfig,
-                                          ValidationError,
-                                          InvalidKey)
+from bistrain.config.configuration import (BisTrainConfiguration,
+                                           LocalConfig,
+                                           ValidationError,
+                                           InvalidKey)
 from bistrain.noise import GaussianNoise, OUNoise
 
 LOCAL_FOLDER = os.path.dirname(__file__)
 INVALID_FILE_1 = os.path.join(LOCAL_FOLDER, 'test_invalid_config_1.yaml')
 INVALID_FILE_2 = os.path.join(LOCAL_FOLDER, 'test_invalid_config_2.yaml')
 VALID_FILE = os.path.join(LOCAL_FOLDER, 'test_valid_config.yaml')
-CONFIG_SPEC = os.path.join('bistrain', 'config.spec')
+CONFIG_SPEC = os.path.join('bistrain', 'config', 'config.spec')
 
 
 class TestBisTrainConfiguration():
@@ -68,6 +68,10 @@ class TestBisTrainConfiguration():
         b = a.dict_copy()
         b["GLOBAL"] = 1
         assert a["GLOBAL"] != b["GLOBAL"]
+
+    def test_defalt_spec(self):
+        a = BisTrainConfiguration(VALID_FILE)
+        assert a
 
 
 class TestLocalConfig():

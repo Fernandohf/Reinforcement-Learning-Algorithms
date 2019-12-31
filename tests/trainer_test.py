@@ -5,7 +5,7 @@ import os
 import gym
 
 from bistrain.trainer import Trainer
-from bistrain.utils.configuration import BisTrainConfiguration
+from bistrain.config.configuration import BisTrainConfiguration
 from bistrain.noise import GaussianNoise
 from bistrain.agents import A2CAgent
 
@@ -14,7 +14,7 @@ LOCAL_FOLDER = os.path.dirname(__file__)
 VALID_FILE = os.path.join(LOCAL_FOLDER, 'test_valid_config.yaml')
 VALID_FILE_A2C = os.path.join(LOCAL_FOLDER, 'test_valid_a2c.yaml')
 VALID_FILE_DDPG = os.path.join(LOCAL_FOLDER, 'test_valid_ddpg.yaml')
-CONFIG_SPEC = os.path.join('bistrain', 'config.spec')
+CONFIG_SPEC = os.path.join('bistrain', 'config', 'config.spec')
 
 
 class TestTrainer():

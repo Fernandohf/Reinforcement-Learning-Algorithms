@@ -1,6 +1,7 @@
 """
 Handle configurations files
 """
+import os
 import logging
 from copy import deepcopy
 
@@ -57,8 +58,9 @@ class BisTrainConfiguration(ConfigObj):
     """
     Extended class with built-in validation
     """
+    CONFIG_SPEC = os.path.join(os.path.dirname(__file__), "config.spec")
 
-    def __init__(self, *args, configspec="config.spec",
+    def __init__(self, *args, configspec=CONFIG_SPEC,
                  default_key="GLOBAL", **kwargs):
         super().__init__(*args, configspec=configspec, **kwargs)
 
