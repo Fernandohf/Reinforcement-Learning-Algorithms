@@ -8,12 +8,13 @@ setup(
                  implemented in Pytorch',
   author = 'Fernando Henrique',
   author_email = 'nandohfernandes@gmail.com',
-  url = 'https://github.com/fernandohf/bistrain',
-  download_url = 'https://github.com/fernandohf/bistrain/archive/v_01.tar.gz', # TODO
+  url = 'https://github.com/Fernandohf/Reinforcement-Learning-Algorithms',
+  download_url = 'https://github.com/Fernandohf/Reinforcement-Learning-Algorithms/archive/0.1.tar.gz',  # TODO
   keywords = ['PYTORCH', 'A2C', 'DDPG', 'REINFORCEMENT-LEARNING', 'RL'],
-  install_requires=[
-          'validators',
-          'beautifulsoup4',
+  install_requires=[  # TODO
+          'pytorch',
+          'gym',
+          'tqdm',
       ],
   classifiers=[
     'Development Status :: 3 - Alpha',
