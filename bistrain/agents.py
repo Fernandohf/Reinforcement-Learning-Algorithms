@@ -95,7 +95,7 @@ class A2CAgent(BaseAgent):
         # Unroll trajectories of parallel envs
         s, a, r, sp, dones = n_step_boostrap(envs, self,
                                              self._initial_states,
-                                             n_step=config.N_STEP_BS)
+                                             n_bootstrap=config.N_STEP_BS)
         self._learn(s, a, r, sp, dones, self._gamma)
         # Start from the next state
         self._initial_states = sp[:, 0, :]

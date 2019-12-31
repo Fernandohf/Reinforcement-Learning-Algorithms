@@ -34,6 +34,8 @@ ENVIRONMENT = string()                                            # Environment 
   GAMMA = float(.1, 1, default=.999)                              #
   LAMBDA = float(min=0, max=1, default=.5)                        #
   GRADIENT_CLIP = float(min=0, default=0)                         #
+  N_STEP_BS = integer(min=1, default=4)                           #
+
 
 
 [DDPG]                                                            # *DDPG AGENTS CONFIGURATIONS TODO*

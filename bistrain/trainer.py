@@ -135,16 +135,20 @@ class Trainer():
         return agent
 
     def training_stats(self):
+        """
+        Display the training stats
+        TODO
+        """
         pass
 
     def run(self, save=False):
         """
-        Run the trainer episodes
+        Run the trainer through episodes
 
         Parameters
         ----------
         save: bool
-            Wether save the progress
+            Wether save the the modelsprogress
         """
         # Saving metrics
         scores_deque = deque(maxlen=self.config.PRINT_EVERY)
@@ -171,10 +175,13 @@ class Trainer():
                                        np.mean(avg_scores))
                 pbar.set_description(text)
 
+            # TODO - verify if the environment was solved!
+
         # Saves training values
         self.scores = avg_scores
         if save:
             # TODO Add save function to each agent
+            # agent.save('checkpoint_final.pth')
             pass
 
 
