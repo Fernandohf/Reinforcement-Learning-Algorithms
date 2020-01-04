@@ -19,7 +19,7 @@ class GaussianNoise(BaseNoise):
 
         Parameters
         ----------
-        config: BisTrainConiguration
+        config: BisTrainConfiguration
             Configuration of the noise
         """
         # Base class initialization
@@ -28,7 +28,7 @@ class GaussianNoise(BaseNoise):
         self.eps_beta = self.config.EPS_BETA
         self.mean = self.config.MEAN
         self.std = self.config.SIGMA
-        self.size = self.config.ACTION_SIZE
+        self.size = self.config.SIZE
         self.eps_min = self.config.EPS_MIN
         self.reset()
 
@@ -72,7 +72,7 @@ class OUNoise(BaseNoise):
 
         Parameters
         ----------
-        config: BisTrainConiguration
+        config: BisTrainConfiguration
             Configuration of the noise
         """
         # Base class initialization
@@ -84,7 +84,7 @@ class OUNoise(BaseNoise):
         """
         Reset the internal state to mean
         """
-        self.state = np.ones(self.config.ACTION_SIZE) * self.config.MEAN
+        self.state = np.ones(self.config.SIZE) * self.config.MEAN
 
     def sample(self):
         """
