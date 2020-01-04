@@ -64,7 +64,7 @@ class A2CAgent(BaseAgent):
         """
         Reset the current learning episode
         """
-        # Noise scalling
+        # Noise scaling
         self.noise.reset()
         # Episode parameter
         self._initial_states = None
@@ -83,7 +83,7 @@ class A2CAgent(BaseAgent):
         done: bool
             Return wether the episode is done or not
         scores: array
-            Rewardsactor_configach parallel environment
+            Rewards for each parallel environment
         """
         # To facilitate access
         config = self.config.TRAINING
@@ -109,7 +109,7 @@ class A2CAgent(BaseAgent):
 
     def _learn(self, states, actions, rewards, next_states, dones, gamma):
         """
-        Update policy and value parameters using given batch of expericences.
+        Update policy and value parameters using given batch of experiences.
 
         Parameters
         ----------

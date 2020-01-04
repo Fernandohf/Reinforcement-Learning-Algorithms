@@ -7,7 +7,7 @@ from copy import deepcopy
 from configobj import ConfigObj
 from validate import Validator
 
-from . import CONFIG_SPEC
+from . import get_specfile
 
 
 class InvalidKey(ValueError):
@@ -60,9 +60,12 @@ class BisTrainConfiguration(ConfigObj):
     Extended class with built-in validation
     """
 
-    def __init__(self, *args, configspec=CONFIG_SPEC,
+    def __init__(self, infile, configspec=None,
                  default_key="GLOBAL", **kwargs):
-        super().__init__(*args, configspec=configspec, **kwargs)
+        # Config specification
+        if configspec is None:
+            configspec = get_specfile("DEFAULT")
+        super().__init__(infile, configspec=configspec, **kwargs)
 
         # Perform validation
         self.validator = Validator()

@@ -12,10 +12,7 @@ from .noise import OUNoise, GaussianNoise
 from .agents import DDPGAgent, A2CAgent
 from .config.configuration import BisTrainConfiguration, LocalConfig
 from .utils import make_multi_envs
-from .config import (CONFIGSPEC_DDPG,
-                     CONFIGSPEC_PPO,
-                     CONFIGSPEC_A2C,
-                     CONFIG_SPEC)
+from .config import get_specfile
 
 # In case of being imported on notebook
 try:
@@ -23,17 +20,6 @@ try:
     from tqdm import tqdm_notebook as tqdm
 except NameError:
     from tqdm import tqdm
-
-
-def get_specfile(agent_type):
-    if agent_type == "DDPG":
-        return CONFIGSPEC_DDPG
-    elif agent_type == "PPO":
-        return CONFIGSPEC_PPO
-    elif agent_type == "A2C":
-        return CONFIGSPEC_A2C
-    else:
-        return CONFIG_SPEC
 
 
 class Trainer():

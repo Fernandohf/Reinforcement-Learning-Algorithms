@@ -1,4 +1,4 @@
-# Configuration specifications of differet algorithms
+# Configuration specifications of different algorithms
 
 [GLOBAL]                                                          # *COMMON CONFIGURATION*
 SEED = integer(default=42)                                        # Random seed
