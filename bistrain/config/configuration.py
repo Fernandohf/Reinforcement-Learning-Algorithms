@@ -7,6 +7,8 @@ from copy import deepcopy
 from configobj import ConfigObj
 from validate import Validator
 
+from . import get_specfile
+
 
 class InvalidKey(ValueError):
     """
@@ -58,9 +60,12 @@ class BisTrainConfiguration(ConfigObj):
     Extended class with built-in validation
     """
 
-    def __init__(self, *args, configspec="config.spec",
+    def __init__(self, infile, configspec=None,
                  default_key="GLOBAL", **kwargs):
-        super().__init__(*args, configspec=configspec, **kwargs)
+        # Config specification
+        if configspec is None:
+            configspec = get_specfile("DEFAULT")
+        super().__init__(infile, configspec=configspec, **kwargs)
 
         # Perform validation
         self.validator = Validator()
@@ -97,6 +102,26 @@ class BisTrainConfiguration(ConfigObj):
         Return LocalConfig object of the given section
         """
         return LocalConfig(self[section])
+
+    def __str__(self):
+        """
+        Beatiful visualization
+        """
+        def pretty_line(values, d=0):
+            if isinstance(values, dict):
+                return ("\n" +
+                        ("\t" * d)).join([k + ":\t" + pretty_line(v, d+1)
+                                          for k, v in values.items()]) + "\n"
+            else:
+                return str(values)
+
+        return pretty_line(self)
+
+    def _repr_html_(self):
+        """
+        Jupyter notebooks representation
+        """
+        return "<pre>" + self.__str__() + "</pre>"
 
 
 class LocalConfig():

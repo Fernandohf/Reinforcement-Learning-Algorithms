@@ -8,7 +8,7 @@ from torch.nn.utils import clip_grad_norm_
 import numpy as np
 
 from ..buffers import ReplayBuffer
-from ..utils.configuration import LocalConfig
+from ..config.configuration import LocalConfig
 from ..networks.actors import FCActorDiscrete, FCActorContinuous
 from ..networks.critics import FCCritic, LSTMCritic
 

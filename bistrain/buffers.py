@@ -7,7 +7,7 @@ from collections import deque, namedtuple
 import torch
 import numpy as np
 
-from .utils.configuration import LocalConfig
+from .config.configuration import LocalConfig
 
 
 class ReplayBuffer:

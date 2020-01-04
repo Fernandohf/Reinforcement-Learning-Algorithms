@@ -1,3 +1,6 @@
+"""
+Trainer code
+"""
 import os
 from collections import deque
 
@@ -7,8 +10,9 @@ from gym.core import Env
 
 from .noise import OUNoise, GaussianNoise
 from .agents import DDPGAgent, A2CAgent
-from .utils.configuration import BisTrainConfiguration, LocalConfig
+from .config.configuration import BisTrainConfiguration, LocalConfig
 from .utils import make_multi_envs
+from .config import get_specfile
 
 # In case of being imported on notebook
 try:
@@ -46,7 +50,9 @@ class Trainer():
 
         # Load global/local config
         if isinstance(config, str):
-            config = BisTrainConfiguration(config)
+            c = BisTrainConfiguration(config)
+            config = BisTrainConfiguration(config,
+                                           get_specfile(c["AGENT"].upper()))
         elif isinstance(config, BisTrainConfiguration):
             pass
         else:

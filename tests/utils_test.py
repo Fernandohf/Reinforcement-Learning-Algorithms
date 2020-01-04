@@ -3,17 +3,22 @@ import os
 import numpy as np
 import pytest
 
-from bistrain.utils.configuration import (BisTrainConfiguration,
-                                          LocalConfig,
-                                          ValidationError,
-                                          InvalidKey)
+from bistrain.config.configuration import (BisTrainConfiguration,
+                                           LocalConfig,
+                                           ValidationError,
+                                           InvalidKey)
 from bistrain.noise import GaussianNoise, OUNoise
 
 LOCAL_FOLDER = os.path.dirname(__file__)
 INVALID_FILE_1 = os.path.join(LOCAL_FOLDER, 'test_invalid_config_1.yaml')
 INVALID_FILE_2 = os.path.join(LOCAL_FOLDER, 'test_invalid_config_2.yaml')
 VALID_FILE = os.path.join(LOCAL_FOLDER, 'test_valid_config.yaml')
-CONFIG_SPEC = os.path.join('bistrain', 'config.spec')
+VALID_A2C = os.path.join(LOCAL_FOLDER, 'test_valid_a2c.yaml')
+VALID_DDPG = os.path.join(LOCAL_FOLDER, 'test_valid_ddpg.yaml')
+CONFIG_SPEC = os.path.join('bistrain', 'config', 'config.spec')
+CONFIG_A2C = os.path.join('bistrain', 'config', 'a2c.spec')
+CONFIG_PPO = os.path.join('bistrain', 'config', 'ppo.spec')
+CONFIG_DDPG = os.path.join('bistrain', 'config', 'ddpg.spec')
 
 
 class TestBisTrainConfiguration():
@@ -28,6 +33,14 @@ class TestBisTrainConfiguration():
     def test_validation2(self):
         with pytest.raises(ValidationError):
             BisTrainConfiguration(INVALID_FILE_2, configspec=CONFIG_SPEC)
+
+    def test_validation3(self):
+        a = BisTrainConfiguration(VALID_A2C, configspec=CONFIG_A2C)
+        assert a
+
+    def test_validation4(self):
+        a = BisTrainConfiguration(VALID_DDPG, configspec=CONFIG_DDPG)
+        assert a
 
     def test_invalid_key(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
@@ -68,6 +81,10 @@ class TestBisTrainConfiguration():
         b = a.dict_copy()
         b["GLOBAL"] = 1
         assert a["GLOBAL"] != b["GLOBAL"]
+
+    def test_defalt_spec(self):
+        a = BisTrainConfiguration(VALID_FILE)
+        assert a
 
 
 class TestLocalConfig():
