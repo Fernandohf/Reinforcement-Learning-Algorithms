@@ -18,8 +18,10 @@ from .config import get_specfile
 try:
     get_ipython
     from tqdm import tqdm_notebook as tqdm
+    from halo import HaloNotebook as Halo
 except NameError:
     from tqdm import tqdm
+    from halo import Halo as Halo
 
 
 class Trainer():
@@ -46,7 +48,9 @@ class Trainer():
             Agent object from agents file
 
         """
-        super().__init__()
+        # Halo configuration
+        self.spinner = Halo(text="Loading configuration", spinner='dots')
+        self.spinner.start()
 
         # Load global/local config
         if isinstance(config, str):
@@ -63,12 +67,21 @@ class Trainer():
 
         self.global_config = config
         self.config = LocalConfig(self.global_config["TRAINER"])
+        self.spinner.succeed("Configuration loaded successfully!")
 
+        self.spinner.start("Loading environment")
         # Load environment
         self.env = self.load_environment(env)
+        self.spinner.succeed("Environment loaded successfully!")
 
         # Load agent
+        self.spinner.start("Loading agent")
         self.agent = agent or self.load_agent(self.env)
+        self.spinner.succeed("Agent loaded successfully!")
+
+        # Final message
+        self.spinner.start("")
+        self.spinner.stop_and_persist(symbol="✔".encode('utf-8'), text="Trainer ready!")
 
     def load_environment(self, env=None):
         """

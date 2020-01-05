@@ -7,9 +7,7 @@
 import os
 from bistrain.trainer import Trainer
 from bistrain.config.configuration import BisTrainConfiguration
-from bistrain.config import CONFIGSPEC_A2C, CONFIG_SPEC
-from configobj import ConfigObj
-from validate import Validator
+from bistrain.config import CONFIGSPEC_A2C
 
 
 # Define configuration file or Object
@@ -22,5 +20,5 @@ print(config)
 # print(confobj.validate(validator, preserve_errors=True))
 # Trainer
 # print(confobj)
-trainer = Trainer(config_file)
-#trainer.run()
+trainer = Trainer(config)
+trainer.run()
