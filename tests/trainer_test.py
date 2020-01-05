@@ -1,20 +1,12 @@
 """
 """
-import os
-
 import gym
 
 from bistrain.trainer import Trainer
 from bistrain.config.configuration import BisTrainConfiguration
 from bistrain.noise import GaussianNoise
 from bistrain.agents import A2CAgent
-
-
-LOCAL_FOLDER = os.path.dirname(__file__)
-VALID_FILE = os.path.join(LOCAL_FOLDER, 'test_valid_config.yaml')
-VALID_FILE_A2C = os.path.join(LOCAL_FOLDER, 'test_valid_a2c.yaml')
-VALID_FILE_DDPG = os.path.join(LOCAL_FOLDER, 'test_valid_ddpg.yaml')
-CONFIG_SPEC = os.path.join('bistrain', 'config', 'config.spec')
+from . import CONFIG_SPEC, VALID_FILE, VALID_FILE_A2C, CONFIG_A2C
 
 
 class TestTrainer():
@@ -27,37 +19,36 @@ class TestTrainer():
         assert t
 
     def test_creation2(self):
-        c = BisTrainConfiguration(VALID_FILE_DDPG, configspec=CONFIG_SPEC)
-        t = Trainer(c)
+        t = Trainer(VALID_FILE)
         assert t
 
     def test_creation3(self):
-        c = BisTrainConfiguration(VALID_FILE_A2C, configspec=CONFIG_SPEC)
+        c = BisTrainConfiguration(VALID_FILE_A2C, configspec=CONFIG_A2C)
         t = Trainer(c)
         assert t
 
     def test_init1(self):
-        c = BisTrainConfiguration(VALID_FILE_A2C, configspec=CONFIG_SPEC)
+        c = BisTrainConfiguration(VALID_FILE_A2C, configspec=CONFIG_A2C)
         t = Trainer(c)
         assert t.config.EPISODES == 1000
 
     def test_load_env(self):
-        c = BisTrainConfiguration(VALID_FILE_A2C, configspec=CONFIG_SPEC)
+        c = BisTrainConfiguration(VALID_FILE_A2C, configspec=CONFIG_A2C)
         t = Trainer(c)
-        assert isinstance(t.load_environment(), gym.Env)
+        assert isinstance(t.load_environment(None), gym.Env)
 
     def test_load_agent(self):
-        c = BisTrainConfiguration(VALID_FILE_A2C, configspec=CONFIG_SPEC)
+        c = BisTrainConfiguration(VALID_FILE_A2C, configspec=CONFIG_A2C)
         t = Trainer(c)
-        assert isinstance(t.load_agent(), A2CAgent)
+        assert isinstance(t.load_agent(t.load_environment(None)), A2CAgent)
 
     def test_load_noise(self):
-        c = BisTrainConfiguration(VALID_FILE_A2C, configspec=CONFIG_SPEC)
+        c = BisTrainConfiguration(VALID_FILE_A2C, configspec=CONFIG_A2C)
         t = Trainer(c)
         assert isinstance(t.load_noise(), GaussianNoise)
 
     def test_run(self):
-        c = BisTrainConfiguration(VALID_FILE_A2C, configspec=CONFIG_SPEC)
+        c = BisTrainConfiguration(VALID_FILE_A2C, configspec=CONFIG_A2C)
         # Check if it runs
         c["TRAINER"]["EPISODES"] = 2
         c["TRAINER"]["N_ENVS"] = 2

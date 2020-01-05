@@ -54,43 +54,55 @@ class Trainer():
             config = BisTrainConfiguration(config,
                                            get_specfile(c["AGENT"].upper()))
         elif isinstance(config, BisTrainConfiguration):
-            pass
+            # Validate with new configspec
+            config.set_configspec(get_specfile(config["AGENT"].upper()))
+            config._validate()
+
         else:
             raise ValueError("Configuration file is invalid!")
 
         self.global_config = config
         self.config = LocalConfig(self.global_config["TRAINER"])
 
-        # Load agent
-        self.agent = agent or self.load_agent()
-
         # Load environment
-        self.env = env or self.load_environment()
+        self.env = self.load_environment(env)
 
-    def load_environment(self):
+        # Load agent
+        self.agent = agent or self.load_agent(self.env)
+
+    def load_environment(self, env=None):
         """
         Return environment
+
+        Parameters
+        ----------
+        env:
+            Gym compatible environment
 
         Return
         ------
         env: Env
             Environment object
         """
-        # Load environment(s)
-        if os.path.isfile(self.config.ENVIRONMENT):
-            # Check if the env is a local file
-            env = UnityEnvironmentWrapper(self.config.ENVIRONMENT,
-                                          self.config.N_ENVS)
-        else:
-            if self.config.N_ENVS == 1:
-                # Gym environment
-                env = gym.make(self.config.ENVIRONMENT)
-                env.seed(self.config.SEED)
+        env_config = LocalConfig(self.global_config["ENVIRONMENT"])
+        if env is None:
+            # Load environment(s)
+            if os.path.isfile(env_config.NAME):
+                # Check if the env is a local file
+                env = UnityEnvironmentWrapper(env_config.NAME,
+                                              env_config.N_ENVS)
             else:
-                # Gym environments
-                env = make_multi_envs(self.config.N_ENVS,
-                                      self.config.ENVIRONMENT,
-                                      self.config.SEED)
+                if self.config.N_ENVS == 1:
+                    # Gym environment
+                    env = gym.make(env_config.NAME)
+                    env.seed(self.config.SEED)
+                else:
+                    # Gym environments
+                    env = make_multi_envs(env_config.N_ENVS,
+                                          env_config.NAME,
+                                          self.config.SEED)
+        # Add configuration
+        env.config = env_config
         return env
 
     def load_noise(self):
@@ -114,10 +126,14 @@ class Trainer():
 
         return noise
 
-    def load_agent(self):
+    def load_agent(self, env):
         """
         Load the agent defined in the BisTrainConfig
 
+        Parameters
+        ---------
+        env: Environment object
+            Environment object to train the agent
         Returns
         -------
         agent: Agent
@@ -132,9 +148,9 @@ class Trainer():
 
         # Agent
         if agent_type == 'DDPG':
-            agent = DDPGAgent(agent_config, noise)
+            agent = DDPGAgent(agent_config, noise, env)
         elif agent_type == 'A2C':
-            agent = A2CAgent(agent_config, noise)
+            agent = A2CAgent(agent_config, noise, env)
         else:
             msg = f"Agent type {agent_type} not implemented yet."
             raise NotImplementedError(msg)

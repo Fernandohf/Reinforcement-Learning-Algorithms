@@ -17,11 +17,13 @@ class BaseAgent(ABC):
     """
     Base agent class
     """
-    def __init__(self, config, noise):
+    def __init__(self, config, noise, env):
         # Configuration
         self.config = config
         # Noise process
         self.noise = noise
+        # Environment
+        self.env = env
 
         super().__init__()
 
@@ -32,27 +34,29 @@ class BaseAgent(ABC):
 
         Parameters
         ----------
-        opmizer: bool
+        optimizer: bool
             Wether define the optimizer or not
         """
         actor_config = self.config.ACTOR
+        env_config = self.env.config
+
         # FC architecture
         if actor_config.ARCHITECTURE == 'fc':
             # Continuous
-            if self.config.ACTION_SPACE == 'continuous':
-                policy = FCActorContinuous(self.config.STATE_SIZE,
-                                           self.config.ACTION_SIZE,
+            if env_config.ACTION_SPACE == 'continuous':
+                policy = FCActorContinuous(env_config.STATE_SIZE,
+                                           env_config.ACTION_SIZE,
                                            actor_config.HIDDEN_SIZE,
                                            self.config.SEED,
                                            actor_config.HIDDEN_ACTIV,
                                            actor_config.OUTPUT_LOC_ACTIV,
                                            actor_config.OUTPUT_SCALE_ACTIV,
                                            actor_config.OUTPUT_LOC_SCALER,
-                                           self.config.ACTION_RANGE)
+                                           env_config.ACTION_RANGE)
             # Discrete
-            elif self.config.ACTION_SPACE == 'discrete':
-                policy = FCActorDiscrete(self.config.STATE_SIZE,
-                                         self.config.ACTION_SIZE,
+            elif env_config.ACTION_SPACE == 'discrete':
+                policy = FCActorDiscrete(env_config.STATE_SIZE,
+                                         env_config.ACTION_SIZE,
                                          actor_config.HIDDEN_SIZE,
                                          self.config.SEED,
                                          actor_config.HIDDEN_ACTIV)
@@ -74,18 +78,19 @@ class BaseAgent(ABC):
 
         Parameters
         ----------
-        opmizer: bool
+        optimizer: bool
             Wether define the optimizer or not
         """
         critic_config = self.config.CRITIC
+        env_config = self.env.config
         if critic_config.ARCHITECTURE == 'fc':
-            val_func = FCCritic(self.config.STATE_SIZE,
-                                self.config.ACTION_SIZE,
+            val_func = FCCritic(env_config.STATE_SIZE,
+                                env_config.ACTION_SIZE,
                                 critic_config.HIDDEN_SIZE,
                                 self.config.SEED)
         elif critic_config.ARCHITECTURE == 'lstm':
-            val_func = LSTMCritic(self.config.STATE_SIZE,
-                                  self.config.ACTION_SIZE,
+            val_func = LSTMCritic(env_config.STATE_SIZE,
+                                  env_config.ACTION_SIZE,
                                   critic_config.HIDDEN_SIZE,
                                   self.config.SEED)
         # Move to device and return
@@ -129,19 +134,20 @@ class BaseAgent(ABC):
         Modify the action with noise
         """
         # Continuous actions
-        if self.config.ACTION_SPACE == "continuous":
+        env_config = self.env.config
+        if env_config.ACTION_SPACE == "continuous":
             action += self.noise.sample()
             # Clipped action
             action = np.clip(action,
-                             *self.config.ACTION_RANGE)
+                             *env_config.ACTION_RANGE)
         # Discrete Actions
-        elif self.config.ACTION_SPACE == "discrete":
+        elif env_config.ACTION_SPACE == "discrete":
             action = self.noise.sample(action)
         return action
 
     def _clip_gradient(self, model):
         """
-        Perform graient clipping in given model
+        Perform gradient clipping in given model
         """
         # Gradient clipping
         if self.config.TRAINING.GRADIENT_CLIP != 0:

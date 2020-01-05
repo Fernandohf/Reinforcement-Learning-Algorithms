@@ -2,10 +2,12 @@
 DEVICE = cpu
 SEED = 42
 AGENT = ddpg
+
+[ENVIRONMENT]
 ACTION_SIZE = 2
 ACTION_SPACE = discrete
 STATE_SIZE = 4
-ENVIRONMENT = CartPole-v0
+NAME = CartPole-v0
 
 [DDPG]
 

@@ -3,11 +3,24 @@
 
 # # A2C Example
 #
-# This example shows how to use the Asyncronous TODO (A2C) Agent to solve an environment.
-
+# This example shows how to use TODO (A2C) Agent to solve an environment.
+import os
 from bistrain.trainer import Trainer
+from bistrain.config.configuration import BisTrainConfiguration
+from bistrain.config import CONFIGSPEC_A2C, CONFIG_SPEC
+from configobj import ConfigObj
+from validate import Validator
 
+
+# Define configuration file or Object
+config_file = os.path.join(os.path.dirname(__file__), 'config_a2c.yaml')
+config = BisTrainConfiguration(config_file, configspec=CONFIGSPEC_A2C)
+print(config)
+
+# confobj = ConfigObj(config_file, configspec=CONFIG_SPEC)
+# validator = Validator()
+# print(confobj.validate(validator, preserve_errors=True))
 # Trainer
-trainr = Trainer('config_a2c.yaml')
-
-trainr.run()
+# print(confobj)
+trainer = Trainer(config_file)
+#trainer.run()

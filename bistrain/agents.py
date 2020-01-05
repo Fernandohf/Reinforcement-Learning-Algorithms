@@ -11,7 +11,7 @@ class A2CAgent(BaseAgent):
     Advantage Actor Critic (A2C) Agent
     """
 
-    def __init__(self, config_file, noise):
+    def __init__(self, config_file, noise, env):
         """
         Initialize an Advantage Actor Critic (A2C) Agent object.
 
@@ -21,9 +21,11 @@ class A2CAgent(BaseAgent):
             Path to configuration file or configuration object
         noise: utils.noise
             Noise object used in the agent
+        env: environment object
+            Environment object to train the agent
         """
         # Base class
-        super().__init__(config_file, noise)
+        super().__init__(config_file, noise, env)
 
         # Actor Network
         self.actor = self._set_policy()
@@ -191,7 +193,7 @@ class A2CAgent(BaseAgent):
 class DDPGAgent(BaseAgent):
     """Interacts with and learns from the environment."""
 
-    def __init__(self, config_file, noise):
+    def __init__(self, config_file, noise, env):
         """
         Initialize an Deep Deterministic Policy Gradient Agent object.
 
@@ -201,9 +203,11 @@ class DDPGAgent(BaseAgent):
             Path to configuration file or configuration object
         noise: utils.noise object
             Noise object used in the agent
+        env: environment object
+            Environment object to train the agent
         """
         # Base class
-        super().__init__(config_file, noise)
+        super().__init__(config_file, noise, env)
 
         # Actor Network
         self.actor_local = self._set_policy()

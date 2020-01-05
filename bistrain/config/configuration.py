@@ -62,11 +62,18 @@ class BisTrainConfiguration(ConfigObj):
 
     def __init__(self, infile, configspec=None,
                  default_key="GLOBAL", **kwargs):
+        # Transform local file to path
         # Config specification
         if configspec is None:
             configspec = get_specfile("DEFAULT")
-        super().__init__(infile, configspec=configspec, **kwargs)
+        super().__init__(infile, configspec=configspec, file_error=True, **kwargs)
 
+        self._validate()
+
+        # Add default values
+        self._default_key = default_key
+
+    def _validate(self):
         # Perform validation
         self.validator = Validator()
         self.validation = self.validate(self.validator, preserve_errors=True)
@@ -76,8 +83,8 @@ class BisTrainConfiguration(ConfigObj):
             logging.error("File validation failed!")
             raise ValidationError(self.validation)
 
-        # Add default values
-        self._default_key = default_key
+    def set_configspec(self, configspec):
+        self._handle_configspec(configspec)
 
     def __getitem__(self, key):
         if key in self.keys():

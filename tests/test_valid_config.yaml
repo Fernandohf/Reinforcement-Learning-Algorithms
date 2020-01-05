@@ -1,12 +1,15 @@
 [GLOBAL]
 DEVICE = cpu
-SEED = 42
+SEED = 52
 AGENT = a2c
+
+[ENVIRONMENT]
 ACTION_SIZE = 1
 ACTION_SPACE = continuous
 ACTION_RANGE = -2, 2
 STATE_SIZE = 3
-ENVIRONMENT = Pendulum-v0
+NAME = Pendulum-v0
+N_ENVS = 10
 
 [A2C]
 
@@ -29,7 +32,7 @@ ENVIRONMENT = Pendulum-v0
 
 [EXPLORATION]
 TYPE = gaussian
-SIZE = 2
+SIZE = 1
 EPS_BETA = 0.1
 EPS_MIN = 0.01
 MEAN = 0.0

@@ -1,21 +1,13 @@
 """
-Tests for each implemeted agents
+Tests for each implemented agents
 """
-import os
-
 from torch.optim import Adam
 
 from bistrain.agents import A2CAgent, DDPGAgent
 from bistrain.noise import GaussianNoise, OUNoise
 from bistrain.config.configuration import BisTrainConfiguration
 from bistrain.networks.actors import FCActorContinuous, FCActorDiscrete
-
-
-LOCAL_FOLDER = os.path.dirname(__file__)
-VALID_FILE = os.path.join(LOCAL_FOLDER, 'test_valid_config.yaml')
-VALID_FILE_A2C = os.path.join(LOCAL_FOLDER, 'test_valid_a2c.yaml')
-VALID_FILE_DDPG = os.path.join(LOCAL_FOLDER, 'test_valid_ddpg.yaml')
-CONFIG_SPEC = os.path.join('bistrain', 'config', 'config.spec')
+from . import CONFIG_A2C, CONFIG_DDPG, VALID_FILE, VALID_FILE_A2C, VALID_FILE_DDPG
 
 
 # TODO - learning tests
@@ -25,9 +17,11 @@ class TestA2CAgent():
     """
 
     def _create_agent(self, file=VALID_FILE):
-        c = BisTrainConfiguration(file, configspec=CONFIG_SPEC)
+        c = BisTrainConfiguration(file, configspec=CONFIG_A2C)
+        env = lambda x: x
+        env.config = c.get_localconfig("ENVIRONMENT")
         n = GaussianNoise(c.get_localconfig("EXPLORATION"))
-        a = A2CAgent(c.get_localconfig("A2C"), n)
+        a = A2CAgent(c.get_localconfig("A2C"), n, env)
         return a
 
     def test_optimizer(self):
@@ -43,14 +37,16 @@ class TestA2CAgent():
         assert isinstance(a.actor, FCActorContinuous)
 
 
-class TestDDPGgent():
+class TestDDPGAgent():
     """
     Test class to DDPG Agent
     """
     def _create_agent(self, file=VALID_FILE_DDPG):
-        c = BisTrainConfiguration(file, configspec=CONFIG_SPEC)
+        c = BisTrainConfiguration(file, configspec=CONFIG_DDPG)
+        env = lambda x: x
+        env.config = c.get_localconfig("ENVIRONMENT")
         n = OUNoise(c.get_localconfig("EXPLORATION"))
-        a = DDPGAgent(c.get_localconfig("DDPG"), n)
+        a = DDPGAgent(c.get_localconfig("DDPG"), n, env)
         return a
 
     def test_optimizer(self):

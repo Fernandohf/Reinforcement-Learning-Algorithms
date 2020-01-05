@@ -1,5 +1,3 @@
-import os
-
 import numpy as np
 import pytest
 
@@ -8,17 +6,8 @@ from bistrain.config.configuration import (BisTrainConfiguration,
                                            ValidationError,
                                            InvalidKey)
 from bistrain.noise import GaussianNoise, OUNoise
-
-LOCAL_FOLDER = os.path.dirname(__file__)
-INVALID_FILE_1 = os.path.join(LOCAL_FOLDER, 'test_invalid_config_1.yaml')
-INVALID_FILE_2 = os.path.join(LOCAL_FOLDER, 'test_invalid_config_2.yaml')
-VALID_FILE = os.path.join(LOCAL_FOLDER, 'test_valid_config.yaml')
-VALID_A2C = os.path.join(LOCAL_FOLDER, 'test_valid_a2c.yaml')
-VALID_DDPG = os.path.join(LOCAL_FOLDER, 'test_valid_ddpg.yaml')
-CONFIG_SPEC = os.path.join('bistrain', 'config', 'config.spec')
-CONFIG_A2C = os.path.join('bistrain', 'config', 'a2c.spec')
-CONFIG_PPO = os.path.join('bistrain', 'config', 'ppo.spec')
-CONFIG_DDPG = os.path.join('bistrain', 'config', 'ddpg.spec')
+from . import (CONFIG_SPEC, VALID_FILE, VALID_FILE_A2C, VALID_FILE_DDPG,
+               INVALID_FILE_1, INVALID_FILE_2, CONFIG_A2C, CONFIG_DDPG)
 
 
 class TestBisTrainConfiguration():
@@ -35,11 +24,11 @@ class TestBisTrainConfiguration():
             BisTrainConfiguration(INVALID_FILE_2, configspec=CONFIG_SPEC)
 
     def test_validation3(self):
-        a = BisTrainConfiguration(VALID_A2C, configspec=CONFIG_A2C)
+        a = BisTrainConfiguration(VALID_FILE_A2C, configspec=CONFIG_A2C)
         assert a
 
     def test_validation4(self):
-        a = BisTrainConfiguration(VALID_DDPG, configspec=CONFIG_DDPG)
+        a = BisTrainConfiguration(VALID_FILE_DDPG, configspec=CONFIG_DDPG)
         assert a
 
     def test_invalid_key(self):
@@ -48,36 +37,36 @@ class TestBisTrainConfiguration():
             a["abc"]
 
     def test_dict_access1(self):
-        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        assert a["GLOBAL"]["ACTION_SIZE"] == 1
+        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_A2C)
+        assert a["ENVIRONMENT"]["ACTION_SIZE"] == 1
 
     def test_dict_access2(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        assert a["GLOBAL"]["SEED"] == 42
+        assert a["GLOBAL"]["SEED"] == 52
 
     def test_dict_access3(self):
-        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
+        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_A2C)
         assert a["A2C"]["CRITIC"]["HIDDEN_SIZE"] == [256, 128]
 
     def test_dict_access4(self):
-        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        assert a["ACTION_SIZE"] == 1
+        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_A2C)
+        assert a["ENVIRONMENT"]["ACTION_SIZE"] == 1
 
     def test_dict_access5(self):
-        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
+        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_A2C)
         assert a["A2C"]["TRAINING"]["GAMMA"] == 0.99
 
     def test_dict_access6(self):
-        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
-        assert a["STATE_SIZE"] == 3
+        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_A2C)
+        assert a["ENVIRONMENT"]["STATE_SIZE"] == 3
 
     def test_default_key(self):
-        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC,
+        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_A2C,
                                   default_key="EXPLORATION")
         assert a["TYPE"] == 'gaussian'
 
     def test_dict_copy(self):
-        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
+        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_A2C)
         b = a.dict_copy()
         b["GLOBAL"] = 1
         assert a["GLOBAL"] != b["GLOBAL"]
@@ -96,19 +85,19 @@ class TestLocalConfig():
         assert LocalConfig(a)
 
     def test_attr_access1(self):
-        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
+        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_A2C)
         b = LocalConfig(a["EXPLORATION"])
         assert b.TYPE == 'gaussian'
 
     def test_attr_access2(self):
-        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
+        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_A2C)
         b = LocalConfig(a["A2C"])
         assert b.ACTOR.LR == 0.001
 
     def test_attr_access3(self):
-        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
+        a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_A2C)
         b = LocalConfig(a["A2C"])
-        assert b.SEED == 42
+        assert b.SEED == 52
 
     def test_attr_access4(self):
         a = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
@@ -135,7 +124,7 @@ class TestGaussianNoise():
     """
     @staticmethod
     def _create_noise():
-        c = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
+        c = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_A2C)
         c["GLOBAL"]["ACTION_SIZE"] = 1
         n = GaussianNoise(c["EXPLORATION"])
         return n
@@ -158,7 +147,7 @@ class TestOUNoise():
     """
     @staticmethod
     def _create_noise():
-        c = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_SPEC)
+        c = BisTrainConfiguration(VALID_FILE, configspec=CONFIG_A2C)
         c["GLOBAL"]["ACTION_SIZE"] = 1
         c["EXPLORATION"]["TYPE"] = 'ou'
         n = OUNoise(c["EXPLORATION"])
@@ -168,4 +157,4 @@ class TestOUNoise():
         n = self._create_noise()
         _ = [n.sample() for i in range(100)]
         n.reset()
-        assert n.state == n.config.MEAN
+        assert np.mean(n.state) == n.config.MEAN
