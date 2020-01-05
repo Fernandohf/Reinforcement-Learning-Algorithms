@@ -19,7 +19,9 @@ try:
     get_ipython
     from tqdm import tqdm_notebook as tqdm
     from halo import HaloNotebook as Halo
+    N_COLS = 800
 except NameError:
+    N_COLS = 150
     from tqdm import tqdm
     from halo import Halo as Halo
 
@@ -105,7 +107,7 @@ class Trainer():
                 env = UnityEnvironmentWrapper(env_config.NAME,
                                               env_config.N_ENVS)
             else:
-                if self.config.N_ENVS == 1:
+                if env_config.N_ENVS == 1:
                     # Gym environment
                     env = gym.make(env_config.NAME)
                     env.seed(self.config.SEED)
@@ -191,24 +193,24 @@ class Trainer():
         avg_scores = []
 
         # Keep track of progress
-        pbar = tqdm(range(1, self.config.EPISODES + 1), ncols=800)
+        pbar = tqdm(range(1, self.config.EPISODES + 1), ncols=N_COLS, desc="Training")
         for i_episode in pbar:
             # Reset agent noise (exploration)
             self.agent.reset()
 
             for i in range(self.config.MAX_STEPS):
                 scores, done = self.agent.step(self.env)
-                scores_deque.append(scores)
+                scores_deque.append(scores.mean())
                 avg_scores.append(np.mean(scores_deque))
                 if done:
                     break
 
             # Display some progress
             if (i_episode) % self.config.PRINT_EVERY == 0:
-                text = '\rEpisode {}/{}\tAverage Scores:\
-                        {:.2f}'.format(i_episode,
-                                       self.config.EPISODES,
-                                       np.mean(avg_scores))
+                text = '\rEpisode {}/{}\tAverage Scores(Last {}):{:5.2f}'.format(i_episode,
+                                                                                 self.config.EPISODES,
+                                                                                 self.config.PRINT_EVERY,
+                                                                                 np.mean(scores_deque))
                 pbar.set_description(text)
 
             # TODO - verify if the environment was solved!

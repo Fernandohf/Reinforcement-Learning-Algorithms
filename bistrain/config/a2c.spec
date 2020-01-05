@@ -38,6 +38,7 @@ N_ENVS = integer(min=1, default=1)                                # Number of pa
   LAMBDA = float(min=0, max=1, default=.5)                        #
   GRADIENT_CLIP = float(min=0, default=0)                         #
   N_STEP_BS = integer(min=1, default=4)                           #
+  ENTROPY_WEIGHT = float(min=0, default=0.01)                     #
 
 
 [EXPLORATION]                                                     #
@@ -55,5 +56,6 @@ MAX_STEPS = integer(1, 100000, default=200)                       #
 N_ENVS =  integer(1, 1000, default=1)                             #
 EPISODES =  integer(1, 100000, default=500)                       #
 PRINT_EVERY =  integer(1, 1000, default=100)                      #
+DEQUE_LEN =  integer(1, 1000, default=100)                        #
 UPDATE_EVERY = integer(1, 100000, default=1)                      #
 WANDB = boolean(default=False)                                    #

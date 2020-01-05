@@ -9,7 +9,6 @@ from bistrain.trainer import Trainer
 from bistrain.config.configuration import BisTrainConfiguration
 from bistrain.config import CONFIGSPEC_A2C
 
-
 # Define configuration file or Object
 config_file = os.path.join(os.path.dirname(__file__), 'config_a2c.yaml')
 config = BisTrainConfiguration(config_file, configspec=CONFIGSPEC_A2C)

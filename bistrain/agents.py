@@ -52,7 +52,7 @@ class A2CAgent(BaseAgent):
         # Forwards pass on policy
         self.actor.eval()
         with torch.no_grad():
-            action, _ = self.actor(state)
+            action, _, _ = self.actor(state)
             action = action.cpu().detach().numpy()
         self.actor.train()
 
@@ -100,13 +100,14 @@ class A2CAgent(BaseAgent):
                                              n_bootstrap=config.N_STEP_BS)
         self._learn(s, a, r, sp, dones, self._gamma)
         # Start from the next state
-        self._initial_states = sp[:, 0, :]
-        # Collect scores from all parallel envs and if any has finished
-        scores = r[:, 0]
+        self._initial_states = sp[:, -1, :]
+        # Collect average scores from all parallel envs and if any has finished
+        scores = r[:, -1].mean()
         done = dones[:, -1].any()
         # Update initial gamma
         self._gamma *= config.GAMMA
-
+        if done:
+            self._initial_states = None
         return scores, done
 
     def _learn(self, states, actions, rewards, next_states, dones, gamma):
@@ -131,6 +132,7 @@ class A2CAgent(BaseAgent):
 
         # Check consistency
         assert(np.array_equal(states[0, 1, :], next_states[0, 0, :]))
+        config = self.config.TRAINING
 
         # Current state, actions and next_states
         curr_states = torch.from_numpy(states[:, 0, :]).float()
@@ -151,7 +153,7 @@ class A2CAgent(BaseAgent):
 
         # ----------------------- Update Critic ----------------------- #
         # Get predicted actions from last bootstrapped next-state
-        actions_bs_next, _ = self.actor(last_bs_nstate)
+        actions_bs_next, _, _ = self.actor(last_bs_nstate)
         # Discounted bootstraped rewards
         discount = gamma ** np.arange(n_step_bs).reshape(1, -1, 1)
         rewards_bs = torch.from_numpy((rewards * discount).sum(axis=1))
@@ -177,9 +179,10 @@ class A2CAgent(BaseAgent):
 
         # ----------------------- Update Actor ----------------------- #
         # Compute advantage - actor loss
-        _, log_action = self.actor(curr_states)
+        _, log_action, entropy = self.actor(curr_states)
         advantages = (Q_target.detach() - Q_expected.detach())
-        actor_loss = -(log_action * advantages).mean()
+        actor_loss = (-(log_action * advantages).mean()
+                      - config.ENTROPY_WEIGHT * entropy.mean())
         # Minimize loss
         self.actor.optimizer.zero_grad()
         actor_loss.backward()
@@ -276,6 +279,7 @@ class DDPGAgent(BaseAgent):
                 experiences = self.memory.sample()
                 self._learn(experiences, config.GAMMA)
 
+        # Average score across parallel environments
         scores = reward[:, 0].mean()
         done = done[:, -1].any()
 

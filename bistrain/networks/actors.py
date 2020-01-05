@@ -85,7 +85,7 @@ class FCActorContinuous(nn.Module):
         hidden_activation: str
             Hidden units activation function
         output_activation: str
-            Ouput activation function
+            Output activation function
         """
         super().__init__()
         # Set seed
@@ -104,7 +104,7 @@ class FCActorContinuous(nn.Module):
         # Activation hidden
         self.hidden_activation = getattr(torch, hidden_activation)
 
-        # Ouput activation
+        # Output activation
         self.output_loc_activation = getattr(torch, output_loc_activation)
         self.output_scale_activation = getattr(torch, output_scale_activation)
 
@@ -120,12 +120,15 @@ class FCActorContinuous(nn.Module):
         for layer in self.layers[:-2]:
             x = self.hidden_activation(layer(x))
 
-        # Distribution
+        # Distribution parameters
         loc = (self.output_loc_activation(self.layers[-2](x)) *
-               self.output_loc_scaler)
-        scale = self.output_scale_activation(self.layers[-1](x))
+               self.output_loc_scaler) + 1e-5
+        scale = self.output_scale_activation(self.layers[-1](x)) + 1e-5
 
         dist = Normal(loc=loc, scale=scale)
         sample = dist.rsample()
-        log_probs = dist.log_prob(sample)
-        return self.saturation(sample), log_probs
+        sat_sample = self.saturation(sample)
+        log_probs = dist.log_prob(sat_sample).sum(-1).unsqueeze(-1)
+        # Entropy
+        entropy = dist.entropy().sum(-1).unsqueeze(-1)
+        return sat_sample, log_probs, entropy
