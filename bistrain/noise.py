@@ -96,7 +96,8 @@ class OUNoise(BaseNoise):
             Sample from the process
         """
         x = self.state
-        dx = self.config.THETA * (self.config.MEAN - x) + self.config.SIGMA * \
-            np.array([random.random() for i in range(len(x))])
+        dx = (self.config.THETA * (self.config.MEAN - x) +
+              self.config.SIGMA * np.array([random.random()
+                                            for i in range(len(x))]))
         self.state = x + dx
         return self.state
